@@ -7,11 +7,21 @@ ENV USER=1000 \
 
 VOLUME /code
 
-RUN yum install --nodocs -y \
-    valgrind \
-    perf \
-    gcc \
+RUN yum --setopt=group_package_types=mandatory groupinstall --nodocs -y "Development Tools" \
+    && yum install --nodocs -y perf valgrind \
     && yum clean all \
     && rm -rf /var/cache/yum \
     && rm -rf /var/lib/rpm/Packages
+
+RUN mkdir -p /usr/um/gcc-6.2.0/bin/ \
+    && ln -s /usr/bin/gcc /usr/um/gcc-6.2.0/bin/gcc \
+    && ln -s /usr/bin/g++ /usr/um/gcc-6.2.0/bin/g++ \
+    && echo "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/code" >> /root/.bashrc
+
+
+SHELL ["/bin/bash", "-c"]
+
+WORKDIR /code
+
+CMD ["/bin/bash"]
 

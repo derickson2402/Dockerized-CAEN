@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Present the help screen
+if [ $# -eq 0 ] || [ $1 = "help" ]; then
+    echo -e "Helper script for Dockerized-CAEN. To use, run the following:\n"
+    echo -e "    ./caen <program> [args]\n"
+    echo -e "For example, running the following would run Valgrind on an"
+    echo -e "executable called 'program.exe' with a '--flag' and input from a file:\n"
+    echo -e "    ./caen valgrind program.exe --flag < input.txt\n"
+    exit
+fi
+
+# Process the CLI args and get the specified program
+PROGRAM=$1
+shift
+
+# Execute the given program and its args using the CAEN container
+# docker run --rm -it -v "$(pwd):/code" ghcr.io/derickson2402/dockerized-caen:latest $PROGRAM $@
+docker run --rm -it -v "$(pwd):/code" caen-test:latest $PROGRAM $@
+
