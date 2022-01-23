@@ -16,5 +16,5 @@ shift
 
 # Execute the given program and its args using the CAEN container
 # docker run --rm -it -v "$(pwd):/code" ghcr.io/derickson2402/dockerized-caen:latest $PROGRAM $@
-docker run --rm -it -v "$(pwd):/code" caen-test:latest $PROGRAM $@
+docker run --rm -it -v "$(pwd):/code" ghcr.io/derickson2402/dockerized-caen:latest $PROGRAM $@
 
