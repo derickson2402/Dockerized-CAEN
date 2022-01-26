@@ -1,6 +1,9 @@
 FROM centos:8
 
-LABEL maintainer="Dan Erickson (derickson2402@gmail.com)"
+LABEL maintainer = "Dan Erickson (derickson2402@gmail.com)"
+LABEL version = "v0.3"
+LABEL release-date = "2020-04-05"
+LABEL org.opencontainers.image.source = "https://github.com/derickson2402/Dockerized-CAEN"
 
 ENV USER=1000 \
     GROUP=1000
