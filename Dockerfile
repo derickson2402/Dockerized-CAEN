@@ -11,8 +11,8 @@ LABEL org.opencontainers.image.source = "https://github.com/derickson2402/Docker
 
 ENV USER=1000 \
     GROUP=1000
-
 VOLUME /code
+RUN mkdir -p /usr/um
 
 # CentOS has been deprecated in favor of CentOS stream, so update repo list to search archives
 #
@@ -23,7 +23,8 @@ RUN rm -f /etc/yum.repos.d/CentOS-Linux-AppStream.repo \
         -e 's/mirror.centos.org/vault.centos.org/' \
         -e 's/#baseurl/baseurl/' /etc/yum.repos.d/CentOS-Linux-BaseOS.repo \
     && dnf clean all \
-    && dnf swap -y centos-linux-repos centos-stream-repos
+    && dnf swap -y centos-linux-repos centos-stream-repos \
+    && dnf install -y --nodocs wget bzip2 tar which
 
 # Set bash as default
 SHELL ["/bin/bash", "-c"]
@@ -31,14 +32,15 @@ SHELL ["/bin/bash", "-c"]
 
 ################################################################################
 #
-# Experimental golang environment
+# Development environment with basic tools installed, for testing new layers and
+# configurations
  
 FROM caen-base AS caen-dev
 
 # Install default packages for developing these containers
 RUN dnf update -y \
     && dnf --setopt=group_package_types=mandatory groupinstall --nodocs -y "Development Tools" \
-    && dnf install --nodocs -y wget vim
+    && dnf install --nodocs -y vim
 
 CMD ["/bin/bash"]
 
@@ -49,12 +51,10 @@ CMD ["/bin/bash"]
  
 FROM caen-base AS caen-golang
 
-# Install dev packages
-RUN dnf --setopt=group_package_types=mandatory groupinstall --nodocs -y "Development Tools" \
-    && dnf install --nodocs -y wget \
-    && dnf clean all \
-    && rm -rf /var/cache/yum \
-    && rm -rf /var/lib/rpm/Packages
+RUN wget https://dl.google.com/go/go1.16.12.linux-amd64.tar.gz -O /tmp/go.tar.gz \
+    && tar -C /usr/um -xzf /tmp/go.tar.gz \
+    && rm -rf /tmp/go.tar.gz /usr/local/go /usr/go /usr/bin/go \
+    && ln -s /usr/um/go/bin/go /usr/bin/go
 
 # Run the container in the user's project folder
 WORKDIR /code
