@@ -18,11 +18,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Lowercase branch names
+        id: branch
+        uses: ASzc/change-string-case-action@v1
+        with:
+          string: ${{ github.ref_name }}
+
+      - name: Build, tag, and push
         uses: docker/build-push-action@v2
+        env:
+          CONTAINER_NAME: ghcr.io/derickson2402/dockerized-caen
         with:
           context: ./
           file: ./Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+          tags: ${{ env.CONTAINER_NAME }}:${{ steps.branch.outputs.lowercase }}
 
