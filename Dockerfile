@@ -75,7 +75,7 @@ RUN sed -i 's/struct ucontext/ucontext_t/' ./libgcc/config/i386/linux-unwind.h \
     && sed -i 's/struct sigalstack/void/' ./libsanitizer/sanitizer_common/sanitizer_linux.cc \
     && sed -i 's/struct sigalstack/void/' ./libsanitizer/sanitizer_common/sanitizer_linux.h \
     && sed -i '/struct sigalstack/d' ./libsanitizer/sanitizer_common/sanitizer_linux.h \
-    && sed -i 's/struct sigalstack/stack_t' ./libsanitizer/sanitizer_common/sanitizer_stoptheworld_linux_libcdep.cc \
+    && sed -i 's/struct sigalstack/stack_t/' ./libsanitizer/sanitizer_common/sanitizer_stoptheworld_linux_libcdep.cc \
     && sed -i 's/__res_state/struct __res_state/' ./libsanitizer/tsan/tsan_platform_linux.cc \
     && sed -i 's/sizeof(struct ustat)/32/' ./libsanitizer/sanitizer_common/sanitizer_platform_limits_posix.cc
 
@@ -87,7 +87,7 @@ RUN unset C_INCLUDE_PATH CPLUS_INCLUDE_PATH CFLAGS CXXFLAGS \
     --with-bugurl="https://github.com/derickson2402/Dockerized-CAEN/issues" \
     --with-changes-root-url="https://github.com/derickson2402/Dockerized-CAEN" \
     --prefix=/usr/um/gcc-6.2.0 \
-    --enable-languages=default \
+    --disable-multilib \
     && make -j 4 \
     && make install
 
