@@ -1,0 +1,36 @@
+name: Build test image
+on:
+  push:
+    branch: [ dev, 'feature/*', 'refactor/*', 'fix/*' ]
+    branches-ignore: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v2
+
+      - name: Login to GHCR
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Lowercase branch names
+        id: branch
+        uses: ASzc/change-string-case-action@v1
+        with:
+          string: ${{ github.ref_name }}
+
+      - name: Build, tag, and push
+        uses: docker/build-push-action@v2
+        env:
+          CONTAINER_NAME: ghcr.io/derickson2402/dockerized-caen
+        with:
+          context: ./
+          file: ./Dockerfile
+          push: true
+          tags: ${{ env.CONTAINER_NAME }}:${{ steps.branch.outputs.lowercase }}
+

@@ -1,5 +1,40 @@
+################################################################################
+#
+# Base container which fixes CentOS EOL
+
+FROM centos:8 AS caen-base
+
+LABEL maintainer = "Dan Erickson (derickson2402@gmail.com)"
+LABEL version = "v0.3"
+LABEL release-date = "2022-02-02"
+LABEL org.opencontainers.image.source = "https://github.com/derickson2402/Dockerized-CAEN"
+
+ENV USER=1000 \
+    GROUP=1000
+VOLUME /code
+RUN mkdir -p /usr/um
+
+# CentOS has been deprecated in favor of CentOS stream, so update repo list to search archives
+#
+# https://forums.centos.org/viewtopic.php?f=54&t=78708
+RUN rm -f /etc/yum.repos.d/CentOS-Linux-AppStream.repo \
+    && sed -i \
+        -e 's/mirrorlist.centos.org/vault.centos.org/' \
+        -e 's/mirror.centos.org/vault.centos.org/' \
+        -e 's/#baseurl/baseurl/' /etc/yum.repos.d/CentOS-Linux-BaseOS.repo \
+    && dnf clean all \
+    && dnf swap -y centos-linux-repos centos-stream-repos \
+    && dnf install -y --nodocs wget bzip2 tar which
+
+# Set bash as default
+SHELL ["/bin/bash", "-c"]
+
+
+################################################################################
+#
 # Builder stage for compiling gcc-6.2.0 compiler
-FROM centos:8 as gcc-builder
+
+FROM caen-base as gcc-builder
 
 # Install pre-requisite programs for compiling gcc-6.2.0
 # https://forums.centos.org/viewtopic.php?f=54&t=78708 because of CentOS deprecation
@@ -56,36 +91,58 @@ RUN unset C_INCLUDE_PATH CPLUS_INCLUDE_PATH CFLAGS CXXFLAGS \
     && make -j 4 \
     && make install
 
+
 ################################################################################
+#
+# Development environment with basic tools installed, for testing new layers and
+# configurations
+ 
+FROM caen-base AS caen-dev
 
-# CAEN final container
-FROM centos:8
-LABEL maintainer = "Dan Erickson (derickson2402@gmail.com)"
-LABEL version = "v0.3"
-LABEL release-date = "2020-04-05"
-LABEL org.opencontainers.image.source = "https://github.com/derickson2402/Dockerized-CAEN"
+# Install default packages for developing these containers
+RUN dnf update -y \
+    && dnf --setopt=group_package_types=mandatory groupinstall --nodocs -y "Development Tools" \
+    && dnf install --nodocs -y vim
 
-ENV USER=1000 \
-    GROUP=1000
+CMD ["/bin/bash"]
 
-VOLUME /code
 
-# Install default packages for debugger tools
-RUN yum install --nodocs -y perf valgrind \
+################################################################################
+#
+# Experimental golang environment
+ 
+FROM caen-base AS caen-golang
+
+RUN wget https://dl.google.com/go/go1.16.12.linux-amd64.tar.gz -O /tmp/go.tar.gz \
+    && tar -C /usr/um -xzf /tmp/go.tar.gz \
+    && rm -rf /tmp/go.tar.gz /usr/local/go /usr/go /usr/bin/go \
+    && ln -s /usr/um/go/bin/go /usr/bin/go
+
+# Run the container in the user's project folder
+WORKDIR /code
+CMD ["/bin/bash"]
+
+
+################################################################################
+#
+# Default container with all current tools and supported languages
+
+FROM caen-base
+
+# Install dev packages and tools
+RUN yum --setopt=group_package_types=mandatory groupinstall --nodocs -y "Development Tools" \
+    && yum install --nodocs -y perf valgrind \
     && yum clean all \
     && rm -rf /var/cache/yum \
     && rm -rf /var/lib/rpm/Packages
 
 # Copy and link our compiled gcc to the system default
-COPY --from=gcc-builder /usr/um/gcc-6.2.0/
+COPY --from=gcc-builder /usr/um/gcc-6.2.0/ /usr/um/gcc-6.2.0/
 RUN ln -s /usr/um/gcc-6.2.0/bin/gcc /usr/bin/gcc \
     && ln -s /usr/um/gcc-6.2.0/bin/g++ /usr/bin/g++ \
     && ln -s /usr/um/gcc-6.2.0/bin/gfortran /usr/bin/gfortran \
     && echo "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/code" >> /root/.bashrc
 
+# Run the container in the user's project folder
 WORKDIR /code
-
-SHELL ["/bin/bash", "-c"]
-
 CMD ["/bin/bash"]
-
