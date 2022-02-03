@@ -3,11 +3,11 @@ on:
   push:
     tags:
       - 'v*'
-    branches-ignore: [ !main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Check out repo
         uses: actions/checkout@v2
