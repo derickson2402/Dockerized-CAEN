@@ -1,13 +1,10 @@
 name: Publish to GHCR
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     steps:
       - name: Check out repo
         uses: actions/checkout@v2
