@@ -19,10 +19,10 @@ This will run your command in an environment identical to CAEN Linux. For exampl
 
 ## Installation
 
-To use this script, you need to have Docker installed on your [macOS](https://docs.docker.com/desktop/mac/install/), [Windows](https://docs.docker.com/desktop/windows/install/), or [Linux](https://docs.docker.com/engine/install/) computer. With Docker installed and running, simply the ```caen``` script in your project folder and preface any of your commands with it. Run the following in your project folder to automatically grab the script:
+To use this script, you need to have Docker installed on your [macOS](https://docs.docker.com/desktop/mac/install/), [Windows](https://docs.docker.com/desktop/windows/install/), or [Linux](https://docs.docker.com/engine/install/) computer. With Docker installed, simply copy and paste the following command into a shell:
 
 ```bash
-wget https://raw.githubusercontent.com/derickson2402/Dockerized-CAEN/main/caen && chmod +x ./caen
+wget https://raw.githubusercontent.com/derickson2402/Dockerized-CAEN/main/caen -O /usr/local/bin/caen && chmod +x /usr/local/bin/caen
 ```
 
 ## How Does This Work?
@@ -35,10 +35,16 @@ Oops! Sorry about that! Please log an issue [here](https://github.com/derickson2
 
 ## Useful Tips
 
-This container is currently under development, but the script does not check for updates automatically. To get the newest container version, run the following in a terminal with Docker running:
+If you want to use a different version of the container other than the default, you can specify the ```CAEN_VERSION``` environment variable before running the script like such:
 
 ```bash
-docker pull ghcr.io/derickson2402/dockerized-caen:latest
+CAEN_VERSION=dev caen my-program
+```
+
+This also works for optional arguements to the Docker engine, but this is not recommended as it could conflict with the other options used:
+
+```bash
+CAEN_ARGS="-e UID=1001" caen my-program
 ```
 
 Executables generated with this container are compiled for CAEN servers and won't work on your host system. You should run your ```make clean``` script before switching back and forth, and then run ```make``` from the environment you want to use.
@@ -56,6 +62,12 @@ docker run --rm -it -v "$(pwd):/code" ghcr.io/derickson2402/dockerized-caen:late
 ```
 
 ## Hackery
+
+You can specify the name of the container to use just like you can specify the tag:
+
+```bash
+CAEN_REPO_NAME=my-container-name caen my-program
+```
 
 If the container environment is not suiting your needs, you can always run the container manually and hack it into working. The problem is that the update won't survive a container restart, so change the normal script like so:
 

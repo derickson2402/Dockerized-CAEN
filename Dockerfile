@@ -5,10 +5,11 @@
 FROM centos:8 AS caen-base
 
 LABEL maintainer = "Dan Erickson (derickson2402@gmail.com)"
-LABEL version = "v0.3"
-LABEL release-date = "2022-02-02"
+LABEL version = "v0.5"
+LABEL release-date = "2022-02-06"
 LABEL org.opencontainers.image.source = "https://github.com/derickson2402/Dockerized-CAEN"
 
+# Prep base environment
 ENV USER=1000 \
     GROUP=1000
 VOLUME /code
@@ -47,9 +48,11 @@ CMD ["/bin/bash"]
 
 ################################################################################
 #
-# Experimental golang environment
+# Environment for golang development
  
 FROM caen-base AS caen-golang
+
+RUN dnf clean all && rm -rf /var/cache/yum && rm -rf /var/lib/rpm/Packages
 
 RUN wget https://dl.google.com/go/go1.16.12.linux-amd64.tar.gz -O /tmp/go.tar.gz \
     && tar -C /usr/um -xzf /tmp/go.tar.gz \
@@ -68,11 +71,25 @@ CMD ["/bin/bash"]
 FROM caen-base
 
 # Install dev packages and tools
-RUN yum --setopt=group_package_types=mandatory groupinstall --nodocs -y "Development Tools" \
-    && yum install --nodocs -y perf valgrind \
-    && yum clean all \
+RUN dnf --setopt=group_package_types=mandatory groupinstall --nodocs -y "Development Tools" \
+    && dnf install --nodocs -y perf valgrind \
+    && dnf clean all \
     && rm -rf /var/cache/yum \
     && rm -rf /var/lib/rpm/Packages
+
+# Download and install cppcheck
+RUN wget https://github.com/danmar/cppcheck/archive/2.4.tar.gz -O /tmp/cppcheck-2.4.tar.gz \
+    && tar -C /tmp -xzf /tmp/cppcheck-2.4.tar.gz \
+    && rm -rf /tmp/cppcheck-2.4.tar.gz \
+    && cd /tmp/cppcheck-2.4 && make \
+    && mv /tmp/cppcheck-2.4/cppcheck /usr/um/cppcheck \
+    && ln -s /usr/um/cppcheck /usr/bin/cppcheck
+
+# Download and install golang compiler
+RUN wget https://dl.google.com/go/go1.16.12.linux-amd64.tar.gz -O /tmp/go.tar.gz \
+    && tar -C /usr/um -xzf /tmp/go.tar.gz \
+    && rm -rf /tmp/go.tar.gz /usr/local/go /usr/go /usr/bin/go \
+    && ln -s /usr/um/go/bin/go /usr/bin/go
 
 # Sym link expected location of CAEN compiler just in case
 RUN mkdir -p /usr/um/gcc-6.2.0/bin/ \
