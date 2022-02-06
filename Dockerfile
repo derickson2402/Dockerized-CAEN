@@ -37,7 +37,6 @@ SHELL ["/bin/bash", "-c"]
 FROM caen-base as gcc-builder
 
 # Install pre-requisite programs for compiling gcc-6.2.0
-# https://forums.centos.org/viewtopic.php?f=54&t=78708 because of CentOS deprecation
 RUN dnf update -y && dnf install -y --nodocs \
     gcc-c++ \
     libgcc \
@@ -56,6 +55,7 @@ RUN dnf update -y && dnf install -y --nodocs \
 RUN mkdir -p /usr/um/gcc-6.2.0/ /tmp/objdir/ /tmp/gcc-6.2.0/ && cd /tmp \
     && wget https://ftp.gnu.org/gnu/gcc/gcc-6.2.0/gcc-6.2.0.tar.gz \
     && tar -xvf /tmp/gcc-6.2.0.tar.gz -C /tmp/ \
+    && rm -f /tmp/gcc-6.2.0.tar.gz \
     && cd /tmp/gcc-6.2.0 \
     && /tmp/gcc-6.2.0/contrib/download_prerequisites
 
@@ -71,13 +71,28 @@ RUN mkdir -p /usr/um/gcc-6.2.0/ /tmp/objdir/ /tmp/gcc-6.2.0/ && cd /tmp \
 # https://github.com/vmware/photon/blob/master/SPECS/gcc/libsanitizer-avoidustat.h-glibc-2.28.patch
 
 WORKDIR /tmp/gcc-6.2.0
-RUN sed -i 's/struct ucontext/ucontext_t/' ./libgcc/config/i386/linux-unwind.h \
-    && sed -i 's/struct sigalstack/void/' ./libsanitizer/sanitizer_common/sanitizer_linux.cc \
-    && sed -i 's/struct sigalstack/void/' ./libsanitizer/sanitizer_common/sanitizer_linux.h \
-    && sed -i '/struct sigalstack/d' ./libsanitizer/sanitizer_common/sanitizer_linux.h \
-    && sed -i 's/struct sigalstack/stack_t/' ./libsanitizer/sanitizer_common/sanitizer_stoptheworld_linux_libcdep.cc \
-    && sed -i 's/__res_state/struct __res_state/' ./libsanitizer/tsan/tsan_platform_linux.cc \
-    && sed -i 's/sizeof(struct ustat)/32/' ./libsanitizer/sanitizer_common/sanitizer_platform_limits_posix.cc
+RUN sed -i \
+        -e 's/struct ucontext/ucontext_t/' \
+        ./libgcc/config/i386/linux-unwind.h \
+    && sed -i \
+        -e 's/struct sigaltstack/void/' \
+        ./libsanitizer/sanitizer_common/sanitizer_linux.cc \
+    && sed -i \
+        -e '/struct sigaltstack;/d' \
+        ./libsanitizer/sanitizer_common/sanitizer_linux.h \
+    && sed -i \
+        -e 's/struct sigaltstack/void/g' \
+        ./libsanitizer/sanitizer_common/sanitizer_linux.h \
+    && sed -i \
+        -e 's/struct sigaltstack/stack_t/' \
+        ./libsanitizer/sanitizer_common/sanitizer_stoptheworld_linux_libcdep.cc \
+    && sed -i \
+        's/__res_state/struct __res_state/g' \
+        ./libsanitizer/tsan/tsan_platform_linux.cc \
+    && sed -i \
+        -e 's/sizeof(struct ustat)/32/' \
+        -e '/ustat.h/d' \
+        ./libsanitizer/sanitizer_common/sanitizer_platform_limits_posix.cc
 
 # Configure the Makefile and compile
 WORKDIR /tmp/objdir
