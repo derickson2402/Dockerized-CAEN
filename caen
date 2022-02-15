@@ -1,7 +1,11 @@
 #!/bin/bash
 
+# Shell settings to improve safety
+set -f -o pipefail
+
 # Define our help message, docker flags, and env vars
-CAEN_DEFAULT_ARGS="--rm -it --name caen-tainer -e TERM=${TERM} -v $(pwd):/code"
+CAEN_DEFAULT_ARGS="--rm -it --name caen-tainer -e TERM=${TERM:=linux}"
+CAEN_WORKING_DIR="-v '$(pwd):/code'"
 HELP_MESSAGE=$(cat << EOF
 Helper script for Dockerized-CAEN. To use, run the following:
 
@@ -93,5 +97,6 @@ esac
 shift
 
 # Execute the given program and its args using the CAEN container
-docker run $CAEN_DEFAULT_ARGS $CAEN_ARGS ${CAEN_REPO_NAME:=ghcr.io/derickson2402/dockerized-caen}:${CAEN_VERSION:=latest} $PROGRAM $@
+set -x
+eval docker run "$CAEN_DEFAULT_ARGS" "$CAEN_ARGS" "$CAEN_WORKING_DIR" "${CAEN_REPO_NAME:=ghcr.io/derickson2402/dockerized-caen}":"${CAEN_VERSION:=latest}" "$PROGRAM" "$@"
 
