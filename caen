@@ -9,17 +9,17 @@ CAEN_WORKING_DIR="-v '$(pwd):/code'"
 HELP_MESSAGE=$(cat << EOF
 Helper script for Dockerized-CAEN. To use, run the following:
 
-   ./caen <program> [args]
+   $0 <program> [args]
 
 For example, running the following would run Valgrind on an
 executable called 'program.exe' with a '--flag' and input from a file:
 
-   ./caen valgrind program.exe --flag < input.txt
+   $0 valgrind program.exe --flag < input.txt
 
 You can specify a specific version of the container to run with the
 \$CAEN_VERSION environment variable like so:
 
-    CAEN_VERSION=dev caen valgrind
+    CAEN_VERSION=dev $0 valgrind
 
 EOF
 )
@@ -94,7 +94,6 @@ case $PROGRAM in
         CAEN_DEFAULT_ARGS="$CAEN_DEFAULT_ARGS --privileged --cap-add SYS_ADMIN"
         ;;
 esac
-shift
 
 # Execute the given program and its args using the CAEN container
 # Also check for stdin, allowing for file redirection
@@ -102,6 +101,6 @@ if [ -n 0 ]; then
     eval docker run "$CAEN_DEFAULT_ARGS" "$CAEN_ARGS" "$CAEN_WORKING_DIR" "${CAEN_REPO_NAME:=ghcr.io/derickson2402/dockerized-caen}":"${CAEN_VERSION:=latest}" "$PROGRAM" "$@" < /dev/stdin
 else
     CAEN_DEFAULT_ARGS="$CAEN_DEFAULT_ARGS -t"
-    eval docker run "$CAEN_DEFAULT_ARGS" "$CAEN_ARGS" "$CAEN_WORKING_DIR" "${CAEN_REPO_NAME:=ghcr.io/derickson2402/dockerized-caen}":"${CAEN_VERSION:=latest}" "$PROGRAM" "$@"
+    eval  docker run "$CAEN_DEFAULT_ARGS" "$CAEN_ARGS" "$CAEN_WORKING_DIR" "${CAEN_REPO_NAME:=ghcr.io/derickson2402/dockerized-caen}":"${CAEN_VERSION:=latest}" "$PROGRAM" "$@"
 fi
 
