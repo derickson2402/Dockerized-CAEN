@@ -97,10 +97,10 @@ esac
 
 # Execute the given program and its args using the CAEN container
 # Also check for stdin, allowing for file redirection
-if [ -n 0 ]; then
-    eval docker run "$CAEN_DEFAULT_ARGS" "$CAEN_ARGS" "$CAEN_WORKING_DIR" "${CAEN_REPO_NAME:=ghcr.io/derickson2402/dockerized-caen}":"${CAEN_VERSION:=latest}" "$PROGRAM" "$@" < /dev/stdin
+if [ ! -t 0 ]; then
+    eval -- docker run "$CAEN_DEFAULT_ARGS" "$CAEN_ARGS" "$CAEN_WORKING_DIR" "${CAEN_REPO_NAME:=ghcr.io/derickson2402/dockerized-caen}":"${CAEN_VERSION:=latest}" "$PROGRAM" "$@" < /dev/stdin
 else
     CAEN_DEFAULT_ARGS="$CAEN_DEFAULT_ARGS -t"
-    eval  docker run "$CAEN_DEFAULT_ARGS" "$CAEN_ARGS" "$CAEN_WORKING_DIR" "${CAEN_REPO_NAME:=ghcr.io/derickson2402/dockerized-caen}":"${CAEN_VERSION:=latest}" "$PROGRAM" "$@"
+    eval -- docker run "$CAEN_DEFAULT_ARGS" "$CAEN_ARGS" "$CAEN_WORKING_DIR" "${CAEN_REPO_NAME:=ghcr.io/derickson2402/dockerized-caen}":"${CAEN_VERSION:=latest}" "$PROGRAM" "$@"
 fi
 
