@@ -11,18 +11,20 @@ LABEL org.opencontainers.image.source = "https://github.com/derickson2402/Docker
 
 # Prep base environment
 ENV USER=1000 \
-    GROUP=1000
+    GROUP=1000 \
+    PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/code
 VOLUME /code
 RUN mkdir -p /usr/um
 
-# CentOS has been deprecated in favor of CentOS stream, so update repo list to search archives
-#
+# CentOS has been deprecated in favor of CentOS stream, so update repo list to
+# search archives:
 # https://forums.centos.org/viewtopic.php?f=54&t=78708
-RUN rm -f /etc/yum.repos.d/CentOS-Linux-AppStream.repo \
-    && sed -i \
-        -e 's/mirrorlist.centos.org/vault.centos.org/' \
-        -e 's/mirror.centos.org/vault.centos.org/' \
-        -e 's/#baseurl/baseurl/' /etc/yum.repos.d/CentOS-Linux-BaseOS.repo \
+# https://www.getpagespeed.com/server-setup/how-to-fix-dnf-after-centos-8-went-eol
+RUN sed -i \
+        -e 's/#baseurl/baseurl/g' \
+        -e 's/mirror.centos.org/vault.epel.cloud/g' \
+        -e 's/mirrorlist/#mirrorlist/g' \
+        /etc/yum.repos.d/CentOS-Linux-* \
     && dnf clean all \
     && dnf swap -y centos-linux-repos centos-stream-repos \
     && dnf install -y --nodocs wget bzip2 tar make
@@ -52,13 +54,15 @@ CMD ["/bin/bash"]
  
 FROM caen-dev AS builder-cppcheck
 
-# Download and compile cppcheck
+# Download and compile cppcheck. Note that /usr/share/Cppcheck has an
+# uppercase 'C', as this is what CAEN has for some reason
 RUN wget https://github.com/danmar/cppcheck/archive/2.4.tar.gz \
         -O /tmp/cppcheck-2.4.tar.gz \
     && tar -C /tmp -xzf /tmp/cppcheck-2.4.tar.gz \
     && rm -rf /tmp/cppcheck-2.4.tar.gz \
-    && cd /tmp/cppcheck-2.4 && make \
-    && mv /tmp/cppcheck-2.4/cppcheck /usr/um/cppcheck
+    && cd /tmp/cppcheck-2.4 \
+    && FILESDIR=/usr/share/Cppcheck make install \
+    && rm -rf /tmp/cppcheck-2.4
 
 
 ################################################################################
@@ -91,12 +95,11 @@ RUN dnf --setopt=group_package_types=mandatory \
 # Sym link expected location of CAEN compiler just in case
 RUN mkdir -p /usr/um/gcc-6.2.0/bin/ \
     && ln -s /usr/bin/gcc /usr/um/gcc-6.2.0/bin/gcc \
-    && ln -s /usr/bin/g++ /usr/um/gcc-6.2.0/bin/g++ \
-    && echo "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/code" >> /root/.bashrc
+    && ln -s /usr/bin/g++ /usr/um/gcc-6.2.0/bin/g++
 
 # Set up cppcheck
-COPY --from=builder-cppcheck /usr/um/cppcheck /usr/um/cppcheck
-RUN ln -s /usr/um/cppcheck /usr/bin/cppcheck
+COPY --from=builder-cppcheck /usr/bin/cppcheck /usr/bin/cppcheck
+COPY --from=builder-cppcheck /usr/share/Cppcheck /usr/share/Cppcheck
 
 # Set up golang
 COPY --from=builder-golang /usr/um/go /usr/um/go
