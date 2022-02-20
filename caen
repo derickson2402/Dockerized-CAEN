@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Shell settings to improve safety
-#set -f -o pipefail
+set -f -o pipefail
 
 # Define our help message, docker flags, and env vars
 CAEN_DEFAULT_ARGS="--rm -i --name caen-tainer -e TERM=${TERM:=linux}"
