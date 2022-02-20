@@ -5,24 +5,31 @@
 Tired of using ssh and Duo mobile when testing your code with CAEN? With this script, all you have to do is run:
 
 ```bash
-./caen <program> [args]
+caen <program> [args]
 ```
 
-This will run your command in an environment identical to CAEN Linux. For example, if you are working on a c++ project for EECS 281, you could use:
+This will run your command in an environment identical to CAEN Linux. For example, if you are working on a C++ project for EECS 281, you could use:
 
 ```bash
-./caen make clean
-./caen make my_program.cpp
-./caen valgrind my_program.cpp
-./caen perf my_program.cpp
+caen make clean
+caen make my_program.cpp < input.txt
+caen valgrind my_program.cpp
+caen perf record my_program.cpp
+```
+
+Or maybe you are writing a program in Go, you might want to use:
+
+```bash
+caen go build my_program.go
+caen ./my_program
 ```
 
 ## Installation
 
-To use this script, you need to have Docker installed on your [macOS](https://docs.docker.com/desktop/mac/install/), [Windows](https://docs.docker.com/desktop/windows/install/), or [Linux](https://docs.docker.com/engine/install/) computer. With Docker installed and running, simply the ```caen``` script in your project folder and preface any of your commands with it. Run the following in your project folder to automatically grab the script:
+To use this script, you need to have Docker installed on your [macOS](https://docs.docker.com/desktop/mac/install/), [Windows](https://docs.docker.com/desktop/windows/install/), or [Linux](https://docs.docker.com/engine/install/) computer. With Docker installed, simply run the following command in a shell:
 
 ```bash
-wget https://raw.githubusercontent.com/derickson2402/Dockerized-CAEN/main/caen && chmod +x ./caen
+wget https://raw.githubusercontent.com/derickson2402/Dockerized-CAEN/main/caen -O /usr/local/bin/caen && chmod +x /usr/local/bin/caen
 ```
 
 ## How Does This Work?
@@ -35,10 +42,16 @@ Oops! Sorry about that! Please log an issue [here](https://github.com/derickson2
 
 ## Useful Tips
 
-This container is currently under development, but the script does not check for updates automatically. To get the newest container version, run the following in a terminal with Docker running:
+If you want to use a different version of the container other than the default, you can specify the ```CAEN_VERSION``` environment variable before running the script like such:
 
 ```bash
-docker pull ghcr.io/derickson2402/dockerized-caen:latest
+CAEN_VERSION=dev caen my-program
+```
+
+This also works for optional arguements to the Docker engine, but this is not recommended as it could conflict with the other options used:
+
+```bash
+CAEN_ARGS="-e UID=1001" caen my-program
 ```
 
 Executables generated with this container are compiled for CAEN servers and won't work on your host system. You should run your ```make clean``` script before switching back and forth, and then run ```make``` from the environment you want to use.
@@ -57,13 +70,19 @@ docker run --rm -it -v "$(pwd):/code" ghcr.io/derickson2402/dockerized-caen:late
 
 ## Hackery
 
-If the container environment is not suiting your needs, you can always run the container manually and hack it into working. The problem is that the update won't survive a container restart, so change the normal script like so:
+You can specify the name of the container to use just like you can specify the tag:
+
+```bash
+CAEN_REPO_NAME=my-container-name caen my-program
+```
+
+If the container environment is not suiting your needs, you can always run the container manually and hack it into working. This is not recommended, and will not necessarily work if you don't know how docker works. However, the following should be what you want:
 
 ```bash
 docker run -it --name caen-tainer -v "$(pwd):/code" ghcr.io/derickson2402/dockerized-caen:latest bash
 ```
 
-The important part is to get rid of the ```--rm``` tag so the container isn't destroyed when it exits, and to give it a name to easily reference it with (you don't have to use ```caen-tainer```, but I thought it was funny :smile:). You should be able to jump back into the container with either of:
+The important part is to mount your local directory correctly, and to get rid of the ```--rm``` tag so the container isn't destroyed when it exits. If you give the container a name to easily reference it with (you don't have to use ```caen-tainer```, but I thought it was funny :smile:), you should be able to jump back into the container with either of:
 
 ```bash
 docker start -ai caen-tainer
@@ -75,3 +94,4 @@ docker exec -it caen-tainer <command>
 I started working on this project while taking EECS-281, in order to make debugging my programs easier. I am sharing this project online in hopes that others will find it useful, but note that I don't have much free time to develop this project.
 
 With that said, if you have an idea that would make this project even better, feel free to log an issue or submit a Pull Request. I greatly appreciate any help on developing this project!
+
