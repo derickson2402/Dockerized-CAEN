@@ -1,22 +1,60 @@
 # Dockerized-CAEN
 
-This is a Docker container running the same debugging software on UofM CAEN servers, which can integrate into your Makefile for automatic testing on your local machine. As of 23 January 2022, the compiler version is 8.50 20210514, so there could be some minor inconsistancies between this container and the actual CAEN servers.
+[![Publish Latest](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/publish.yml/badge.svg)](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/publish.yml) [![Build test image](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/testing.yml/badge.svg)](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/testing.yml)
 
-To use this container, you need to have Docker installed on your [macOS](https://docs.docker.com/desktop/mac/install/), [Windows](https://docs.docker.com/desktop/windows/install/), or [Linux](https://docs.docker.com/engine/install/) computer.
-
-With Docker installed and running, simply put the ```caen``` script in your project folder and preface any of your commands with it, like such:
+Tired of using ssh and Duo mobile when testing your code with CAEN? With this script, all you have to do is run:
 
 ```bash
-./caen <program> [args]
+caen <program> [args]
 ```
 
-Note that the executables generated with ```./caen make``` will not be executable by your host machine, so run ```make clean``` before switching environments.
-
-This container is currently under development, but the script does not check for updates automatically. To get the newest container version, run the following in a terminal with Docker running:
+This will run your command in an environment identical to CAEN Linux. For example, if you are working on a C++ project for EECS 281, you could use:
 
 ```bash
-docker pull ghcr.io/derickson2402/dockerized-caen:latest
+caen make clean
+caen make my_program.cpp < input.txt
+caen valgrind my_program.cpp
+caen perf record my_program.cpp
 ```
+
+Or maybe you are writing a program in Go, you might want to use:
+
+```bash
+caen go build my_program.go
+caen ./my_program
+```
+
+## Installation
+
+To use this script, you need to have Docker installed on your [macOS](https://docs.docker.com/desktop/mac/install/), [Windows](https://docs.docker.com/desktop/windows/install/), or [Linux](https://docs.docker.com/engine/install/) computer. With Docker installed, simply run the following command in a shell:
+
+```bash
+wget https://raw.githubusercontent.com/derickson2402/Dockerized-CAEN/main/caen -O /usr/local/bin/caen && chmod +x /usr/local/bin/caen
+```
+
+## How Does This Work?
+
+This script runs your command inside of a Docker Container, which is like a virtual environment running Linux. This environment is set up with CentOS (a fork of the RHEL on CAEN) and all of the tools that you normally use on CAEN. That means that there should be no difference running a program in the container versus on actual CAEN servers, and that the Autograder compiler should work the same as in the container!
+
+## Help! I Need A Program That's Not Installed!
+
+Oops! Sorry about that! Please log an issue [here](https://github.com/derickson2402/Dockerized-CAEN/issues/new) with the name of said program and any special tools that might go along with it. I will add it as soon as I can! For a temporary workaround, see the section below on [hackery](#hackery).
+
+## Useful Tips
+
+If you want to use a different version of the container other than the default, you can specify the ```CAEN_VERSION``` environment variable before running the script like such:
+
+```bash
+CAEN_VERSION=dev caen my-program
+```
+
+This also works for optional arguements to the Docker engine, but this is not recommended as it could conflict with the other options used:
+
+```bash
+CAEN_ARGS="-e UID=1001" caen my-program
+```
+
+Executables generated with this container are compiled for CAEN servers and won't work on your host system. You should run your ```make clean``` script before switching back and forth, and then run ```make``` from the environment you want to use.
 
 You can also integrate CAEN with your ```Makefile``` so that when you call ```make [job]``` it automatically runs in the container. Do this by replacing the ```CXX``` variable with the following:
 
@@ -27,10 +65,31 @@ CXX = ./caen g++
 If you do not want to download the ```caen``` script, you can also just preface your commands with the following, but this is not recommended:
 
 ```bash
-docker run --rm -it --pull -v "$(pwd):/code" ghcr.io/derickson2402/dockerized-caen:latest <valgrind|perf> <program> [args]
+docker run --rm -it -v "$(pwd):/code" ghcr.io/derickson2402/dockerized-caen:latest <valgrind|perf> <program> [args]
 ```
 
-# Contributing
+## Hackery
+
+You can specify the name of the container to use just like you can specify the tag:
+
+```bash
+CAEN_REPO_NAME=my-container-name caen my-program
+```
+
+If the container environment is not suiting your needs, you can always run the container manually and hack it into working. This is not recommended, and will not necessarily work if you don't know how docker works. However, the following should be what you want:
+
+```bash
+docker run -it --name caen-tainer -v "$(pwd):/code" ghcr.io/derickson2402/dockerized-caen:latest bash
+```
+
+The important part is to mount your local directory correctly, and to get rid of the ```--rm``` tag so the container isn't destroyed when it exits. If you give the container a name to easily reference it with (you don't have to use ```caen-tainer```, but I thought it was funny :smile:), you should be able to jump back into the container with either of:
+
+```bash
+docker start -ai caen-tainer
+docker exec -it caen-tainer <command>
+```
+
+## Contributing
 
 I started working on this project while taking EECS-281, in order to make debugging my programs easier. I am sharing this project online in hopes that others will find it useful, but note that I don't have much free time to develop this project.
 

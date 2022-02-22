@@ -5,26 +5,29 @@
 FROM centos:8 AS caen-base
 
 LABEL maintainer = "Dan Erickson (derickson2402@gmail.com)"
-LABEL version = "v0.3"
-LABEL release-date = "2022-02-02"
+LABEL version = "v0.5"
+LABEL release-date = "2022-02-06"
 LABEL org.opencontainers.image.source = "https://github.com/derickson2402/Dockerized-CAEN"
 
+# Prep base environment
 ENV USER=1000 \
-    GROUP=1000
+    GROUP=1000 \
+    PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/code
 VOLUME /code
 RUN mkdir -p /usr/um
 
-# CentOS has been deprecated in favor of CentOS stream, so update repo list to search archives
-#
+# CentOS has been deprecated in favor of CentOS stream, so update repo list to
+# search archives:
 # https://forums.centos.org/viewtopic.php?f=54&t=78708
-RUN rm -f /etc/yum.repos.d/CentOS-Linux-AppStream.repo \
-    && sed -i \
-        -e 's/mirrorlist.centos.org/vault.centos.org/' \
-        -e 's/mirror.centos.org/vault.centos.org/' \
-        -e 's/#baseurl/baseurl/' /etc/yum.repos.d/CentOS-Linux-BaseOS.repo \
+# https://www.getpagespeed.com/server-setup/how-to-fix-dnf-after-centos-8-went-eol
+RUN sed -i \
+        -e 's/#baseurl/baseurl/g' \
+        -e 's/mirror.centos.org/vault.epel.cloud/g' \
+        -e 's/mirrorlist/#mirrorlist/g' \
+        /etc/yum.repos.d/CentOS-Linux-* \
     && dnf clean all \
     && dnf swap -y centos-linux-repos centos-stream-repos \
-    && dnf install -y --nodocs wget bzip2 tar which
+    && dnf install -y --nodocs wget bzip2 tar make
 
 # Set bash as default
 SHELL ["/bin/bash", "-c"]
@@ -109,8 +112,8 @@ RUN unset C_INCLUDE_PATH CPLUS_INCLUDE_PATH CFLAGS CXXFLAGS \
 
 ################################################################################
 #
-# Development environment with basic tools installed, for testing new layers and
-# configurations
+# Development environment with basic tools installed, used for builder layers
+# and for testing
  
 FROM caen-base AS caen-dev
 
@@ -124,18 +127,32 @@ CMD ["/bin/bash"]
 
 ################################################################################
 #
-# Experimental golang environment
- 
-FROM caen-base AS caen-golang
+# Builder container for compiling cppcheck
 
-RUN wget https://dl.google.com/go/go1.16.12.linux-amd64.tar.gz -O /tmp/go.tar.gz \
+FROM caen-dev AS builder-cppcheck
+
+# Download and compile cppcheck. Note that /usr/share/Cppcheck has an
+# uppercase 'C', as this is what CAEN has for some reason
+RUN wget https://github.com/danmar/cppcheck/archive/2.4.tar.gz \
+        -O /tmp/cppcheck-2.4.tar.gz \
+    && tar -C /tmp -xzf /tmp/cppcheck-2.4.tar.gz \
+    && rm -rf /tmp/cppcheck-2.4.tar.gz \
+    && cd /tmp/cppcheck-2.4 \
+    && FILESDIR=/usr/share/Cppcheck make install \
+    && rm -rf /tmp/cppcheck-2.4
+
+
+################################################################################
+#
+# Builder container for compiling cppcheck
+
+FROM caen-dev AS builder-golang
+
+# Download and install golang
+RUN wget https://dl.google.com/go/go1.16.12.linux-amd64.tar.gz \
+        -O /tmp/go.tar.gz \
     && tar -C /usr/um -xzf /tmp/go.tar.gz \
-    && rm -rf /tmp/go.tar.gz /usr/local/go /usr/go /usr/bin/go \
-    && ln -s /usr/um/go/bin/go /usr/bin/go
-
-# Run the container in the user's project folder
-WORKDIR /code
-CMD ["/bin/bash"]
+    && rm -rf /tmp/go.tar.gz /usr/local/go /usr/go /usr/bin/go
 
 
 ################################################################################
@@ -145,18 +162,31 @@ CMD ["/bin/bash"]
 FROM caen-base
 
 # Install dev packages and tools
-RUN yum --setopt=group_package_types=mandatory groupinstall --nodocs -y "Development Tools" \
-    && yum install --nodocs -y perf valgrind \
-    && yum clean all \
+RUN dnf --setopt=group_package_types=mandatory \
+        groupinstall --nodocs -y "Development Tools" \
+    && dnf install --nodocs -y perf valgrind \
+    && dnf clean all \
     && rm -rf /var/cache/yum \
     && rm -rf /var/lib/rpm/Packages
+
+# Sym link expected location of CAEN compiler just in case
+RUN mkdir -p /usr/um/gcc-6.2.0/bin/ \
+    && ln -s /usr/bin/gcc /usr/um/gcc-6.2.0/bin/gcc \
+    && ln -s /usr/bin/g++ /usr/um/gcc-6.2.0/bin/g++
+
+# Set up cppcheck
+COPY --from=builder-cppcheck /usr/bin/cppcheck /usr/bin/cppcheck
+COPY --from=builder-cppcheck /usr/share/Cppcheck /usr/share/Cppcheck
+
+# Set up golang
+COPY --from=builder-golang /usr/um/go /usr/um/go
+RUN ln -s /usr/um/go/bin/go /usr/bin/go
 
 # Copy and link our compiled gcc to the system default
 COPY --from=gcc-builder /usr/um/gcc-6.2.0/ /usr/um/gcc-6.2.0/
 RUN ln -s /usr/um/gcc-6.2.0/bin/gcc /usr/bin/gcc \
     && ln -s /usr/um/gcc-6.2.0/bin/g++ /usr/bin/g++ \
-    && ln -s /usr/um/gcc-6.2.0/bin/gfortran /usr/bin/gfortran \
-    && echo "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/code" >> /root/.bashrc
+    && ln -s /usr/um/gcc-6.2.0/bin/gfortran /usr/bin/gfortran
 
 # Run the container in the user's project folder
 WORKDIR /code
