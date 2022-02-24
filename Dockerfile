@@ -68,6 +68,10 @@ RUN mkdir -p /usr/um/gcc-6.2.0/ /tmp/objdir/ /tmp/gcc-6.2.0/ && cd /tmp \
 # deprecated so the headers simply need to be removed. See links below for
 # description and workaround.
 #
+# Note that the build will fail if --enable-languages is not specified. Also note
+# that gcc is not compiled with address sanitizers at the moment because there are
+# still some bugs to squash, but the sed commands are left here as reference
+#
 # https://gcc.gnu.org/git/?p=gcc.git&a=commit;h=8774a9cf3435d41cd6a89e93c9d8c34b1c5edbcf
 # https://stackoverflow.com/questions/46999900/how-to-compile-gcc-6-4-0-with-gcc-7-2-in-archlinux
 # https://stackoverflow.com/questions/56096060/how-to-fix-the-gcc-compilation-error-sys-ustat-h-no-such-file-or-directory-i
@@ -105,9 +109,11 @@ RUN unset C_INCLUDE_PATH CPLUS_INCLUDE_PATH CFLAGS CXXFLAGS \
     --with-bugurl="https://github.com/derickson2402/Dockerized-CAEN/issues" \
     --with-changes-root-url="https://github.com/derickson2402/Dockerized-CAEN" \
     --prefix=/usr/um/gcc-6.2.0 \
+    --enable-languages=c,c++,fortran \
     --disable-multilib \
     && make -j 4 \
-    && make install
+    && make install \
+    && rm -rf /tmp/gcc-6.2.0 /tmp/objdir
 
 
 ################################################################################
@@ -184,9 +190,9 @@ RUN ln -s /usr/um/go/bin/go /usr/bin/go
 
 # Copy and link our compiled gcc to the system default
 COPY --from=gcc-builder /usr/um/gcc-6.2.0/ /usr/um/gcc-6.2.0/
-RUN ln -s /usr/um/gcc-6.2.0/bin/gcc /usr/bin/gcc \
-    && ln -s /usr/um/gcc-6.2.0/bin/g++ /usr/bin/g++ \
-    && ln -s /usr/um/gcc-6.2.0/bin/gfortran /usr/bin/gfortran
+RUN ln -s /usr/um/gcc-6.2.0/bin/gcc /usr/local/bin/gcc \
+    && ln -s /usr/um/gcc-6.2.0/bin/g++ /usr/local/bin/g++ \
+    && ln -s /usr/um/gcc-6.2.0/bin/gfortran /usr/local/bin/gfortran
 
 # Run the container in the user's project folder
 WORKDIR /code
