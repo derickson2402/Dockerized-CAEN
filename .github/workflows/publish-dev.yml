@@ -32,7 +32,6 @@ jobs:
           images: ghcr.io/derickson2402/dockerized-caen
           flavor: |
             latest=false
-
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -51,5 +50,5 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
