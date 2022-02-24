@@ -1,6 +1,9 @@
 name: Publish to GHCR
+
 on:
-  release:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]:
 
 jobs:
   build:
@@ -19,21 +22,56 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Lowercase tag names
-        id: tag
-        uses: ASzc/change-string-case-action@v1
-        with:
-          string: ${{ github.ref_name }}
-
-      - name: Build, tag, and publish
+      - name: Build for testing
         uses: docker/build-push-action@v2
-        env:
-          CONTAINER_NAME: ghcr.io/derickson2402/dockerized-caen
         with:
-          context: ./
-          file: ./Dockerfile
-          pull: true
+          context: .
+          cache-from: type=gha
+          load: true
+          push: false
+          tags: test-image
+
+      - name: Test image
+        run: |
+          docker run --rm test-image gcc --version
+          docker run --rm test-image g++ --version
+          docker run --rm test-image valgrind --version
+          docker run --rm test-image cppcheck --version
+          docker run --rm test-image go version
+
+# Note that this stage is commented out for now, as the script will pull
+# a new image by default and this cannot be turned off. See #17
+#       - name: Test wrapper script
+#         run: |
+#           CAEN_REPO_NAME=test-image ./caen gcc --version
+#           CAEN_REPO_NAME=test-image ./caen g++ --version
+#           CAEN_REPO_NAME=test-image ./caen valgrind --version
+#           CAEN_REPO_NAME=test-image ./caen cppcheck --version
+#           CAEN_REPO_NAME=test-image ./caen go version
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ghcr.io/derickson2402/dockerized-caen
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
+            type=sha,prefix=sha-
+          labels: |
+            org.opencontainers.image.title=Dockerized-CAEN
+            org.opencontainers.image.description=Containerized CAEN Linux Environment
+            org.opencontainers.image.vendor=Dan Erickson (derickson2402@gmail.com)
+            maintainer=Dan Erickson (derickson2402@gmail.com)
+
+      - name: Build, tag, and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           push: true
-          tags: ${{ env.CONTAINER_NAME }}:latest,${{ env.CONTAINER_NAME }}:${{ steps.tag.outputs.lowercase }}
-
-
+          tags: ${{ steps.meta.outputs.labels }}
+          labels: ${{ steps.meta.outputs.labels }}

@@ -4,11 +4,6 @@
 
 FROM centos:8 AS caen-base
 
-LABEL maintainer = "Dan Erickson (derickson2402@gmail.com)"
-LABEL version = "v0.5"
-LABEL release-date = "2022-02-06"
-LABEL org.opencontainers.image.source = "https://github.com/derickson2402/Dockerized-CAEN"
-
 # Prep base environment
 ENV USER=1000 \
     GROUP=1000 \
