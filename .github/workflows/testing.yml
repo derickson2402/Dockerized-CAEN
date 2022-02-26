@@ -1,8 +1,9 @@
-name: Build test image
+name: Test
+
 on:
   push:
-    branch: [ dev, 'feature/*', 'refactor/*', 'fix/*' ]
-    branches-ignore: [ main ]
+  pull_request:
+  release:
 
 jobs:
   build:
@@ -14,27 +15,29 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v2
 
-      - name: Login to GHCR
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Lowercase branch names
-        id: branch
-        uses: ASzc/change-string-case-action@v1
-        with:
-          string: ${{ github.ref_name }}
-
-      - name: Build, tag, and push
+      - name: Build for testing
         uses: docker/build-push-action@v2
-        env:
-          CONTAINER_NAME: ghcr.io/derickson2402/dockerized-caen
         with:
-          context: ./
-          file: ./Dockerfile
-          pull: true
-          push: true
-          tags: ${{ env.CONTAINER_NAME }}:${{ steps.branch.outputs.lowercase }}
+          context: .
+          cache-from: type=gha
+          load: true
+          push: false
+          tags: test-image
 
+      - name: Test image
+        run: |
+          docker run --rm test-image gcc --version
+          docker run --rm test-image g++ --version
+          docker run --rm test-image valgrind --version
+          docker run --rm test-image cppcheck --version
+          docker run --rm test-image go version
+
+# Note that this stage is commented out for now, as the script will pull
+# a new image by default and this cannot be turned off. See #17
+#       - name: Test wrapper script
+#         run: |
+#           CAEN_REPO_NAME=test-image ./caen gcc --version
+#           CAEN_REPO_NAME=test-image ./caen g++ --version
+#           CAEN_REPO_NAME=test-image ./caen valgrind --version
+#           CAEN_REPO_NAME=test-image ./caen cppcheck --version
+#           CAEN_REPO_NAME=test-image ./caen go version
