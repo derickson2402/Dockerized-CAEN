@@ -5,6 +5,9 @@ on:
   pull_request:
   release:
 
+env:
+  TEST_TAG: ghcr.io/derickson2402/dockerized-caen:testing
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,15 +25,15 @@ jobs:
           cache-from: type=gha
           load: true
           push: false
-          tags: test-image
+          tags: ${{ env.TEST_TAG }}
 
       - name: Test image
         run: |
-          docker run --rm test-image gcc --version
-          docker run --rm test-image g++ --version
-          docker run --rm test-image valgrind --version
-          docker run --rm test-image cppcheck --version
-          docker run --rm test-image go version
+          docker run --rm ${{ env.TEST_TAG }} gcc --version
+          docker run --rm ${{ env.TEST_TAG }} g++ --version
+          docker run --rm ${{ env.TEST_TAG }} valgrind --version
+          docker run --rm ${{ env.TEST_TAG }} cppcheck --version
+          docker run --rm ${{ env.TEST_TAG }} go version
 
 # Note that this stage is commented out for now, as the script will pull
 # a new image by default and this cannot be turned off. See #17
