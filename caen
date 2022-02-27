@@ -6,6 +6,7 @@ set -f -o pipefail
 # Define our help message, docker flags, and env vars
 CAEN_DEFAULT_ARGS="--rm -i --name caen-tainer -e TERM=${TERM:=linux}"
 CAEN_WORKING_DIR="-v '$(pwd):/code'"
+# NOTE: there is a space at the end to force newline printing
 HELP_MESSAGE=$(cat << EOF
 Helper script for Dockerized-CAEN. To use, run the following:
 
@@ -21,57 +22,28 @@ You can specify a specific version of the container to run with the
 
     CAEN_VERSION=dev $0 valgrind
 
+For more help, check me out on GitHub:
+
+     https://github.com/derickson2402/Dockerized-CAEN
+ 
 EOF
 )
 
 # Get OS information
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    HOST_OS=linux
+    if [[ -z "WSL_DISTRO_NAME" ]]; then
+        HOST_OS=linux
+    else
+        HOST_OS=windows
+    fi
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     HOST_OS=mac
-elif [[ "$OSTYPE" == "cygwin"* ]] | [[ "$OSTYPE" == "msys" ]]; then
-    HOST_OS=windows
 else
     echo -e "Uh Oh!! We couldn't figure out what computer you're running..."
     echo -e "You can probably still run the container manually though, check"
     echo -e "out the GitHub page for help!"
     echo -e "\n\thttps://github.com/derickson2402/Dockerized-CAEN"
     exit
-fi
-
-# Make sure that Docker Engine is installed and running
-if ( ! command -v docker &> /dev/null ); then
-    echo -e "Heads up! Docker is not installed on your computer!"
-    echo -e "You can download and install it here:"
-    if [[ "$HOST_OS" == "windows" ]]; then
-        echo -e "\n\thttps://docs.docker.com/desktop/#download-and-install"
-    elif [[ "$HOST_OS" == "mac" ]]; then
-        echo -e "\n\thttps://docs.docker.com/desktop/mac/install/"
-    else
-        echo -e "\n\thttps://docs.docker.com/engine/install/"
-    fi
-    exit
-elif ( ! docker stats --no-stream &> /dev/null ); then
-    echo -e "Waking up Moby the Whale..."
-    if [[ "$HOST_OS" == "mac" ]]; then
-        open /Applications/Docker.app
-    elif [[ "$HOST_OS" == "windows" ]]; then
-        /mnt/c/Program\ Files/Docker/Docker/resources/dockerd.exe
-    elif [[ "$HOST_OS" == "linux" ]]; then
-        sudo systemctl start docker
-    fi
-    sleep 5
-    declare -i counter=0
-    while ( ! docker stats --no-stream &> /dev/null ); do
-        (( counter += 1 ))
-        echo -e "Waiting for Moby the Whale to wake up..."
-        sleep 10
-        if [[ counter -gt 2 ]]; then
-            echo -e "Couldn't wake up Moby :("
-            echo -e "Maybe try restarting Docker?"
-            exit
-        fi
-    done
 fi
 
 # Process the CLI args, set default vars, and get the specified program
@@ -94,6 +66,41 @@ case $PROGRAM in
         CAEN_DEFAULT_ARGS="$CAEN_DEFAULT_ARGS --privileged --cap-add SYS_ADMIN"
         ;;
 esac
+
+# Make sure that Docker Engine is installed and running
+if ( ! command -v docker &> /dev/null ); then
+    echo -e "Heads up! Docker is not installed on your computer!"
+    echo -e "You can download and install it here:"
+    if [[ "$HOST_OS" == "windows" ]]; then
+        echo -e "\n\thttps://docs.docker.com/desktop/#download-and-install"
+    elif [[ "$HOST_OS" == "mac" ]]; then
+        echo -e "\n\thttps://docs.docker.com/desktop/mac/install/"
+    else
+        echo -e "\n\thttps://docs.docker.com/engine/install/"
+    fi
+    exit
+elif ( ! docker stats --no-stream &> /dev/null ); then
+    echo -e "Waking up Moby the Whale..."
+    if [[ "$HOST_OS" == "mac" ]]; then
+        open /Applications/Docker.app
+    elif [[ "$HOST_OS" == "windows" ]]; then
+        bash -c '/mnt/c/Program\ Files/Docker/Docker/Docker\ Desktop.exe &'
+    elif [[ "$HOST_OS" == "linux" ]]; then
+        sudo systemctl start docker
+    fi
+    sleep 5
+    declare -i counter=0
+    while ( ! docker stats --no-stream &> /dev/null ); do
+        (( counter += 1 ))
+        echo -e "Waiting for Moby the Whale to wake up..."
+        sleep 10
+        if [[ counter -gt 2 ]]; then
+            echo -e "Couldn't wake up Moby :("
+            echo -e "Maybe try restarting Docker?"
+            exit
+        fi
+    done
+fi
 
 # Execute the given program and its args using the CAEN container
 # Also check for stdin, allowing for file redirection
