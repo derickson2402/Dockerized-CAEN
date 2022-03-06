@@ -1,6 +1,6 @@
 # Dockerized-CAEN
 
-[![Publish Latest](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/publish.yml/badge.svg)](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/publish.yml) [![Build test image](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/testing.yml/badge.svg)](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/testing.yml)
+[![Publish Latest](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/publish.yml/badge.svg)](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/publish.yml) [![Build test image](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/testing.yml/badge.svg)](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/publish-dev.yml)
 
 Tired of using ssh and Duo mobile when testing your code with CAEN? With this script, all you have to do is run:
 
@@ -29,7 +29,9 @@ caen ./my_program
 To use this script, you need to have Docker installed on your [macOS](https://docs.docker.com/desktop/mac/install/), [Windows](https://docs.docker.com/desktop/windows/install/), or [Linux](https://docs.docker.com/engine/install/) computer. With Docker installed, simply run the following command in a shell:
 
 ```bash
-wget https://raw.githubusercontent.com/derickson2402/Dockerized-CAEN/main/caen -O /usr/local/bin/caen && chmod +x /usr/local/bin/caen
+sudo /bin/bash -c 'wget \
+https://raw.githubusercontent.com/derickson2402/Dockerized-CAEN/main/caen \
+-O /usr/local/bin/caen && chmod +x /usr/local/bin/caen'
 ```
 
 ## How Does This Work?
@@ -94,4 +96,3 @@ docker exec -it caen-tainer <command>
 I started working on this project while taking EECS-281, in order to make debugging my programs easier. I am sharing this project online in hopes that others will find it useful, but note that I don't have much free time to develop this project.
 
 With that said, if you have an idea that would make this project even better, feel free to log an issue or submit a Pull Request. I greatly appreciate any help on developing this project!
-
