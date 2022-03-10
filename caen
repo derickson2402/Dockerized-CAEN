@@ -11,6 +11,8 @@ CAEN_URL='https://github.com/derickson2402/Dockerized-CAEN'
 CAEN_VERSION=${CAEN_VERSION:=latest}
 CAEN_DEFAULT_ARGS="--rm -i --name caen-tainer -e TERM=${TERM:=linux}"
 CAEN_WORKING_DIR="-v '$(pwd):/code'"
+HOST_OS=unknown
+CAEN_LATEST_VERSION=${CAEN_SCRIPT_VER}
 # NOTE: there is a space at the end to force newline printing
 MESSAGE_HELP=$(cat << EOF
 Helper script for Dockerized-CAEN. To use, run the following:
@@ -43,116 +45,146 @@ on GitHub for help:
 EOF
 )
 
-# Get OS information
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    if [[ "${WSL_DISTRO_NAME:=unknown}" == "unknown" ]]; then
-        HOST_OS=linux
-    else
-        HOST_OS=windows
-    fi
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-    HOST_OS=mac
-else
-    echo -e "$MESSAGE_OS_ERROR" && exit 1
-fi
-
-# Check for updates if we have an internet connection
-if ( wget -q --spider ${CAEN_URL} ); then
-    CAEN_LATEST_VERSION=$(wget -qO- \
-        "https://api.github.com/repos/derickson2402/dockerized-caen/releases/latest" \
-        | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-    if [[ -z ${CAEN_LATEST_VERSION} ]]; then
-        echo -e "Hold up! Could not find latest version of script from GitHub" \
-            && exit 1
-    elif [[ ${CAEN_SCRIPT_VER} != ${CAEN_LATEST_VERSION} ]]; then
-        echo -e "Heads up! There is an update available from ${CAEN_SCRIPT_VER} to ${CAEN_LATEST_VERSION}."
-        echo -e "To update, run the following:"
-        echo -e "\n    sudo $0 update\n"
-    fi
-fi
-
-# Make sure that Docker Engine is installed and running
-if ( ! command -v docker &> /dev/null ); then
-    echo -e "Hold up! Docker is not installed on your computer!"
-    echo -e "You can download and install it here:"
-    if [[ "$HOST_OS" == "windows" ]]; then
-        echo -e "\n    https://docs.docker.com/desktop/#download-and-install\n"
-    elif [[ "$HOST_OS" == "mac" ]]; then
-        echo -e "\n    https://docs.docker.com/desktop/mac/install/\n"
-    else
-        echo -e "\n    https://docs.docker.com/engine/install/\n"
-    fi
-    exit
-elif ( ! docker stats --no-stream &> /dev/null ); then
-    echo -e "Waking up Moby the Whale..."
-    if [[ "$HOST_OS" == "mac" ]]; then
-        open /Applications/Docker.app
-    elif [[ "$HOST_OS" == "windows" ]]; then
-        bash -c '/mnt/c/Program\ Files/Docker/Docker/Docker\ Desktop.exe &'
-    elif [[ "$HOST_OS" == "linux" ]]; then
-        sudo systemctl start docker
-    fi
-    sleep 5
-    declare -i counter=0
-    while ( ! docker stats --no-stream &> /dev/null ); do
-        (( counter += 1 ))
-        echo -e "Waiting for Moby the Whale to wake up..."
-        sleep 15
-        if [[ counter -gt 2 ]]; then
-            echo -e "Couldn't wake up Moby :("
-            echo -e "Maybe try restarting Docker?"
-            exit
+# Get OS information and store it to HOST_OS as 'linux', 'windows', or 'mac'
+# This is different from OSTYPE since for example WSL and Ubuntu are both
+# of the form 'linux-gnu*'
+function identifyOS() {
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        if [[ "${WSL_DISTRO_NAME:=unknown}" == "unknown" ]]; then
+            HOST_OS=linux
+        else
+            HOST_OS=windows
         fi
-    done
-    echo "Hi Moby!"
-fi
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        HOST_OS=mac
+    else
+        echo -e "$MESSAGE_OS_ERROR" && exit 1
+    fi
+}
 
-# Process the CLI args, set default vars, and get the specified program
-if [ $# -eq 0 ]; then
-    echo -e "$MESSAGE_HELP" && exit
-fi
-PROGRAM=$1
-shift
-case $PROGRAM in
-    help)
-        echo -e "$MESSAGE_HELP" && exit
-        ;;
-    version)
-        CONT_SHA=$(docker image ls -q ${CAEN_REPO_NAME}:${CAEN_VERSION})
-        CONT_VER=$(docker image inspect --format '{{json .}}' "$CONT_SHA" |
-            perl -nle 'print $& while m{"org.opencontainers.image.version":"\K[^"]+}g')
-        echo -e "Dockerized-CAEN"
-        echo -e "Script version:    ${CAEN_SCRIPT_VER}"
-        echo -e "Container version: ${CONT_VER:=unknown}"
-        exit
-        ;;
-    update)
-        if [[ $(whoami) != "root" ]]; then
-            echo "Hold up! You can only run an update as root!"
-            echo "Try running with 'sudo'"
+# Check for updates if we have an internet connection. Polls GitHub for latest
+# release tag and compares it to script version. Uses CAEN_SCRIPT_LAST_UPDATE
+# to limit update frequency, as checking introduces ~1s delay
+function checkForUpdates() {
+    # Check for internet connectivity before polling GitHub
+    if ( wget -q --spider ${CAEN_URL} ); then
+        CAEN_LATEST_VERSION=$(wget -qO- \
+            "https://api.github.com/repos/derickson2402/dockerized-caen/releases/latest" \
+            | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+        if [[ -z ${CAEN_LATEST_VERSION} ]]; then
+            echo -e "Hold up! Could not find latest version of script from GitHub, but you appear"
+            echo -e "to be connected to the internet. Check your internet and try again, or go to"
+            echo -e "GitHub for more help:"
+            echo -e "\n$CAEN_URL\n"
             exit 1
+        elif [[ ${CAEN_SCRIPT_VER} != ${CAEN_LATEST_VERSION} ]]; then
+            echo -e "Heads up! There is an update available from ${CAEN_SCRIPT_VER} to ${CAEN_LATEST_VERSION}."
+            echo -e "To update, run the following:"
+            echo -e "\n    sudo $0 update\n"
         fi
-        echo "Updating container environment..."
-        docker pull ${CAEN_REPO_NAME}:${CAEN_VERSION} > /dev/null
-        echo "Updating wrapper script..."
-        echo '#!/bin/bash' > /tmp/caen-update.sh
-        chmod +x /tmp/caen-update.sh
-        echo "/bin/bash -c 'wget -q https://raw.githubusercontent.com/derickson2402/Dockerized-CAEN/main/caen -O /usr/local/bin/caen && chmod +x /usr/local/bin/caen'" >> /tmp/caen-update.sh
-        /tmp/caen-update.sh && rm -f /tmp/caen-update.sh && echo "Done!" && exit
-        ;;
-    perf)
-        echo -e "Heads up! Perf requires SYS_ADMIN Docker capabilities to run."
-        echo -e "You should only do this with code that you trust!"
-        read -p "Hit [Ctrl+c] to cancel, or enter to continue" </dev/tty
-        CAEN_DEFAULT_ARGS="$CAEN_DEFAULT_ARGS --privileged --cap-add SYS_ADMIN"
-        ;;
-esac
+    fi
+}
+
+# Make sure that Docker Engine is installed and running. Provide installation
+# URL if not installed, or call host machine to launch daemon if not on
+function startDocker() {
+    if ( ! command -v docker &> /dev/null ); then
+        echo -e "Hold up! Docker is not installed on your computer!"
+        echo -e "You can download and install it here:"
+        if [[ "$HOST_OS" == "windows" ]]; then
+            echo -e "\n    https://docs.docker.com/desktop/#download-and-install\n"
+        elif [[ "$HOST_OS" == "mac" ]]; then
+            echo -e "\n    https://docs.docker.com/desktop/mac/install/\n"
+        else
+            echo -e "\n    https://docs.docker.com/engine/install/\n"
+        fi
+        exit
+    elif ( ! docker stats --no-stream &> /dev/null ); then
+        echo -e "Waking up Moby the Whale..."
+        if [[ "$HOST_OS" == "mac" ]]; then
+            open /Applications/Docker.app
+        elif [[ "$HOST_OS" == "windows" ]]; then
+            bash -c '/mnt/c/Program\ Files/Docker/Docker/Docker\ Desktop.exe &'
+        elif [[ "$HOST_OS" == "linux" ]]; then
+            sudo systemctl start docker
+        fi
+        sleep 5
+        declare -i counter=0
+        while ( ! docker stats --no-stream &> /dev/null ); do
+            (( counter += 1 ))
+            echo -e "Waiting for Moby the Whale to wake up..."
+            sleep 15
+            if [[ counter -gt 2 ]]; then
+                echo -e "Couldn't wake up Moby :("
+                echo -e "Maybe try restarting Docker?"
+                exit
+            fi
+        done
+        echo "Hi Moby!"
+    fi
+}
+
+# Process the CLI args, set default vars, and check what program should be run.
+# This lets us give help/version info, and prompt the user for commands that
+# require elevated permissions
+function checkArgs() {
+    case $1 in
+        help)
+            echo -e "$MESSAGE_HELP" && exit
+            ;;
+        version)
+            CONT_SHA=$(docker image ls -q ${CAEN_REPO_NAME}:${CAEN_VERSION})
+            CONT_VER=$(docker image inspect --format '{{json .}}' "$CONT_SHA" |
+                perl -nle 'print $& while m{"org.opencontainers.image.version":"\K[^"]+}g')
+            echo -e "Dockerized-CAEN"
+            echo -e "Script version:    ${CAEN_SCRIPT_VER}"
+            echo -e "Container version: ${CONT_VER:=unknown}"
+            exit
+            ;;
+        update)
+            if [[ $(whoami) != "root" ]]; then
+                echo -e "Hold up! You can only run an update as root!"
+                echo -e "Try running with sudo:"
+                echo -e "\n    sudo $0 update\n"
+                exit 1
+            fi
+            echo "Updating container environment..."
+            docker pull ${CAEN_REPO_NAME}:${CAEN_VERSION} > /dev/null
+            echo "Updating wrapper script..."
+            echo '#!/bin/bash' > /tmp/caen-update.sh
+            chmod +x /tmp/caen-update.sh
+            echo "/bin/bash -c 'wget -q https://raw.githubusercontent.com/derickson2402/Dockerized-CAEN/main/caen -O /usr/local/bin/caen && chmod +x /usr/local/bin/caen'" >> /tmp/caen-update.sh
+            /tmp/caen-update.sh && rm -f /tmp/caen-update.sh && echo "Done!" && exit
+            ;;
+        perf)
+            echo -e "Heads up! Perf requires SYS_ADMIN Docker capabilities to run."
+            echo -e "You should only do this with code that you trust!"
+            read -p "Hit [Ctrl+c] to cancel, or enter to continue" </dev/tty
+            CAEN_DEFAULT_ARGS="$CAEN_DEFAULT_ARGS --privileged --cap-add SYS_ADMIN"
+            ;;
+    esac
+}
 
 # Execute the given program and its args using the CAEN container
-# Also check for stdin, allowing for file redirection
-if [ ! -t 0 ]; then
-    eval -- docker run "${CAEN_DEFAULT_ARGS}" "${CAEN_ARGS}" "${CAEN_WORKING_DIR}" "${CAEN_REPO_NAME}":"${CAEN_VERSION}" "${PROGRAM}" "$@" < /dev/stdin
-else
-    CAEN_DEFAULT_ARGS="${CAEN_DEFAULT_ARGS} -t"
-    eval -- docker run "$CAEN_DEFAULT_ARGS" "${CAEN_ARGS}" "${CAEN_WORKING_DIR}" "${CAEN_REPO_NAME}":"${CAEN_VERSION}" "${PROGRAM}" "$@"
-fi
+function main() {
+    # Prep our host environment
+    identifyOS
+    checkForUpdates
+    startDocker
+
+    if [ $# -eq 0 ]; then
+        echo -e "$MESSAGE_HELP" && exit
+    fi
+    checkArgs $1
+
+    # Check for stdin, allowing for file redirection to the container
+    if [ ! -t 0 ]; then
+        eval -- docker run "${CAEN_DEFAULT_ARGS}" "${CAEN_ARGS}" "${CAEN_WORKING_DIR}" "${CAEN_REPO_NAME}":"${CAEN_VERSION}" "$@" < /dev/stdin
+    else
+        CAEN_DEFAULT_ARGS="${CAEN_DEFAULT_ARGS} -t"
+        eval -- docker run "$CAEN_DEFAULT_ARGS" "${CAEN_ARGS}" "${CAEN_WORKING_DIR}" "${CAEN_REPO_NAME}":"${CAEN_VERSION}" "$@"
+    fi
+}
+
+# Bash driver, actually calls all functions
+main "$@"; exit
