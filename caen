@@ -44,6 +44,9 @@ on GitHub for help:
  
 EOF
 )
+# Make sure a tmp file existst for us to store the last update check date in
+[[ -f /tmp/caen-last-update-check ]] || touch /tmp/caen-last-update-check
+CAEN_SCRIPT_LAST_UPDATE=$(cat /tmp/caen-last-update-check)
 
 # Get OS information and store it to HOST_OS as 'linux', 'windows', or 'mac'
 # This is different from OSTYPE since for example WSL and Ubuntu are both
@@ -66,6 +69,11 @@ function identifyOS() {
 # release tag and compares it to script version. Uses CAEN_SCRIPT_LAST_UPDATE
 # to limit update frequency, as checking introduces ~1s delay
 function checkForUpdates() {
+    # Update only once daily
+    if [[ ${CAEN_SCRIPT_LAST_UPDATE} == $(date +%y-%m-%d) ]]; then
+        return;
+    fi
+
     # Check for internet connectivity before polling GitHub
     if ( wget -q --spider ${CAEN_URL} ); then
         CAEN_LATEST_VERSION=$(wget -qO- \
@@ -78,6 +86,7 @@ function checkForUpdates() {
             echo -e "\n$CAEN_URL\n"
             exit 1
         elif [[ ${CAEN_SCRIPT_VER} != ${CAEN_LATEST_VERSION} ]]; then
+            echo "$(date +%y-%m-%d)" > /tmp/caen-last-update-check
             echo -e "Heads up! There is an update available from ${CAEN_SCRIPT_VER} to ${CAEN_LATEST_VERSION}."
             echo -e "To update, run the following:"
             echo -e "\n    sudo $0 update\n"
@@ -93,13 +102,13 @@ function startDocker() {
         echo -e "You can download and install it here:"
         if [[ "$HOST_OS" == "windows" ]]; then
             echo -e "\n    https://docs.docker.com/desktop/#download-and-install\n"
-        elif [[ "$HOST_OS" == "mac" ]]; then
+        elif [[ ${HOST_OS} == "mac" ]]; then
             echo -e "\n    https://docs.docker.com/desktop/mac/install/\n"
         else
             echo -e "\n    https://docs.docker.com/engine/install/\n"
         fi
         exit
-    elif ( ! docker stats --no-stream &> /dev/null ); then
+    elif ( ! docker ps &> /dev/null ); then
         echo -e "Waking up Moby the Whale..."
         if [[ "$HOST_OS" == "mac" ]]; then
             open /Applications/Docker.app
@@ -171,7 +180,6 @@ function main() {
     identifyOS
     checkForUpdates
     startDocker
-
     if [ $# -eq 0 ]; then
         echo -e "$MESSAGE_HELP" && exit
     fi
