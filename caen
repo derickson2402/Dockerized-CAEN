@@ -17,17 +17,17 @@ CAEN_LATEST_VERSION=${CAEN_SCRIPT_VER}
 MESSAGE_HELP=$(cat << EOF
 Helper script for Dockerized-CAEN. To use, run the following:
 
-   $0 [program] [args]
+   caen [program] [args]
 
 For example, running the following would run Valgrind on an
 executable called 'program.exe' with a '--flag' and input from a file:
 
-   $0 valgrind program.exe --flag < input.txt
+   caen valgrind program.exe --flag < input.txt
 
 You can specify a specific version of the container to run with the
 \$CAEN_VERSION environment variable like so:
 
-    CAEN_VERSION=dev $0 valgrind
+    CAEN_VERSION=dev caen valgrind
 
 For more help, check me out on GitHub:
 
@@ -89,7 +89,7 @@ function checkForUpdates() {
             echo "$(date +%y-%m-%d)" > /tmp/caen-last-update-check
             echo -e "Heads up! There is an update available from ${CAEN_SCRIPT_VER} to ${CAEN_LATEST_VERSION}."
             echo -e "To update, run the following:"
-            echo -e "\n    sudo $0 update\n"
+            echo -e "\n    sudo caen update\n"
         fi
     fi
 }
@@ -154,7 +154,7 @@ function checkArgs() {
             if [[ $(whoami) != "root" ]]; then
                 echo -e "Hold up! You can only run an update as root!"
                 echo -e "Try running with sudo:"
-                echo -e "\n    sudo $0 update\n"
+                echo -e "\n    sudo caen update\n"
                 exit 1
             fi
             echo "Updating container environment..."
