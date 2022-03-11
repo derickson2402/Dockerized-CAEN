@@ -5,9 +5,7 @@
 FROM centos:8 AS caen-base
 
 # Prep base environment
-ENV USER=1000 \
-    GROUP=1000 \
-    PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/code
+ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/code
 VOLUME /code
 RUN mkdir -p /usr/um
 

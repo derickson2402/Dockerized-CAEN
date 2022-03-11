@@ -44,51 +44,28 @@ Oops! Sorry about that! Please log an issue [here](https://github.com/derickson2
 
 ## Useful Tips
 
-If you want to use a different version of the container other than the default, you can specify the ```CAEN_VERSION``` environment variable before running the script like such:
-
-```bash
-CAEN_VERSION=dev caen my-program
-```
-
-This also works for optional arguements to the Docker engine, but this is not recommended as it could conflict with the other options used:
-
-```bash
-CAEN_ARGS="-e UID=1001" caen my-program
-```
-
 Executables generated with this container are compiled for CAEN servers and won't work on your host system. You should run your ```make clean``` script before switching back and forth, and then run ```make``` from the environment you want to use.
 
-You can also integrate CAEN with your ```Makefile``` so that when you call ```make [job]``` it automatically runs in the container. Do this by replacing the ```CXX``` variable with the following:
+There are a few environment variables that you can use to change the behavior of the container. You can either use ```export VARIABLE=value``` to make the settings stick around until you close your shell, or you can use ```VARIABLE=value caen ...``` to just use it once. The currently supported variables are given below:
 
-```Makefile
-CXX = ./caen g++
-```
+Variable Name | Default Value | Description
+--------------|---------------|------------
+CAEN_VERSION  | latest        | Container tag to use, either of the form ```v0.5```, or a branch name like ```dev``` or ```feature-example```
+CAEN_ARGS     | --            | Optional arguments to pass to the ```docker run``` command. Be careful with these, they will likely collide with existing options
+CAEN_USER     | your-uid:your-gid | Defaults to your current ```UID:GID```. You can specify just ```UID``` or both, just need to use the number
 
-If you do not want to download the ```caen``` script, you can also just preface your commands with the following, but this is not recommended:
-
-```bash
-docker run --rm -it -v "$(pwd):/code" ghcr.io/derickson2402/dockerized-caen:latest <valgrind|perf> <program> [args]
-```
-
-## Hackery
-
-You can specify the name of the container to use just like you can specify the tag:
+For example, temporarily run a command as a different user:
 
 ```bash
-CAEN_REPO_NAME=my-container-name caen my-program
+CAEN_USER=65535 caen my-program
 ```
 
-If the container environment is not suiting your needs, you can always run the container manually and hack it into working. This is not recommended, and will not necessarily work if you don't know how docker works. However, the following should be what you want:
+Or use a different version until you close your shell:
 
 ```bash
-docker run -it --name caen-tainer -v "$(pwd):/code" ghcr.io/derickson2402/dockerized-caen:latest bash
-```
-
-The important part is to mount your local directory correctly, and to get rid of the ```--rm``` tag so the container isn't destroyed when it exits. If you give the container a name to easily reference it with (you don't have to use ```caen-tainer```, but I thought it was funny :smile:), you should be able to jump back into the container with either of:
-
-```bash
-docker start -ai caen-tainer
-docker exec -it caen-tainer <command>
+export CAEN_VERSION=dev
+caen ls
+caen my-program
 ```
 
 ## Contributing
@@ -96,3 +73,9 @@ docker exec -it caen-tainer <command>
 I started working on this project while taking EECS-281, in order to make debugging my programs easier. I am sharing this project online in hopes that others will find it useful, but note that I don't have much free time to develop this project.
 
 With that said, if you have an idea that would make this project even better, feel free to log an issue or submit a Pull Request. I greatly appreciate any help on developing this project!
+
+If you are developing locally, it might be helpful to know that you can specify the name of the container to use just like you can specify the tag:
+
+```bash
+CAEN_REPO_NAME=my-container-name caen my-program
+```
