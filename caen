@@ -166,10 +166,11 @@ function checkArgs() {
             /tmp/caen-update.sh && rm -f /tmp/caen-update.sh && echo "Done!" && exit
             ;;
         perf)
-            echo -e "Heads up! Perf requires SYS_ADMIN Docker capabilities to run."
-            echo -e "You should only do this with code that you trust!"
-            read -p "Hit [Ctrl+c] to cancel, or enter to continue" </dev/tty
-            CAEN_DEFAULT_ARGS="$CAEN_DEFAULT_ARGS --privileged --cap-add SYS_ADMIN"
+            echo -e "Heads up! Perf requires elevated Docker privileges to run. This is"
+            echo -e "dangerous, so you should only do this with code that you trust!\n"
+            echo -e "Hit [Ctrl+c] to cancel, or enter to continue"
+            read </dev/tty
+            CAEN_DEFAULT_ARGS="$CAEN_DEFAULT_ARGS --privileged"
             ;;
     esac
 }
