@@ -6,7 +6,7 @@ on:
   release:
 
 env:
-  TEST_TAG: ghcr.io/derickson2402/dockerized-caen:testing
+  TEST_TAG: ghcr.io/derickson2402/dockerized-caen:latest
 
 jobs:
   build:
@@ -35,12 +35,14 @@ jobs:
           docker run --rm ${{ env.TEST_TAG }} cppcheck --version
           docker run --rm ${{ env.TEST_TAG }} go version
 
-# Note that this stage is commented out for now, as the script will pull
-# a new image by default and this cannot be turned off. See #17
-#       - name: Test wrapper script
-#         run: |
-#           CAEN_REPO_NAME=test-image ./caen gcc --version
-#           CAEN_REPO_NAME=test-image ./caen g++ --version
-#           CAEN_REPO_NAME=test-image ./caen valgrind --version
-#           CAEN_REPO_NAME=test-image ./caen cppcheck --version
-#           CAEN_REPO_NAME=test-image ./caen go version
+      - name: Test wrapper script
+        run: |
+          echo "$(date +%y-%m-%d)" > /tmp/caen-last-update-check
+          ./caen version
+          ./caen help
+          ./caen gcc --version
+          ./caen g++ --version
+          ./caen valgrind --version
+          ./caen cppcheck --version
+          ./caen go version
+

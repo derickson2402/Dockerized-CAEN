@@ -86,12 +86,15 @@ function checkForUpdates() {
             echo -e "GitHub for more help:"
             echo -e "\n$CAEN_URL\n"
             exit 1
+        elif [[ ${CAEN_VERSION} != "latest" ]]; then
+            # Can't check for script updates on special versions, just pull the newest container
+            docker pull ${CAEN_REPO_NAME}:${CAEN_VERSION}
         elif [[ ${CAEN_SCRIPT_VER} != ${CAEN_LATEST_VERSION} ]]; then
-            echo "$(date +%y-%m-%d)" > /tmp/caen-last-update-check
             echo -e "Heads up! There is an update available from ${CAEN_SCRIPT_VER} to ${CAEN_LATEST_VERSION}."
             echo -e "To update, run the following:"
             echo -e "\n    sudo caen update\n"
         fi
+        echo "$(date +%y-%m-%d)" > /tmp/caen-last-update-check
     fi
 }
 
@@ -160,11 +163,17 @@ function checkArgs() {
             fi
             echo "Updating container environment..."
             docker pull ${CAEN_REPO_NAME}:${CAEN_VERSION} > /dev/null
-            echo "Updating wrapper script..."
-            echo '#!/bin/bash' > /tmp/caen-update.sh
-            chmod +x /tmp/caen-update.sh
-            echo "/bin/bash -c 'wget -q https://raw.githubusercontent.com/derickson2402/Dockerized-CAEN/main/caen -O /usr/local/bin/caen && chmod +x /usr/local/bin/caen'" >> /tmp/caen-update.sh
-            /tmp/caen-update.sh && rm -f /tmp/caen-update.sh && echo "Done!" && exit
+            if [[ ${CAEN_VERSION} == "latest" ]]; then
+                echo "Updating wrapper script..."
+                echo '#!/bin/bash' > /tmp/caen-update.sh
+                chmod +x /tmp/caen-update.sh
+                echo "/bin/bash -c 'wget -q https://raw.githubusercontent.com/derickson2402/Dockerized-CAEN/main/caen -O /usr/local/bin/caen && chmod +x /usr/local/bin/caen'" >> /tmp/caen-update.sh
+                /tmp/caen-update.sh && rm -f /tmp/caen-update.sh && echo "Done!" && exit
+            else
+                echo "Heads up! Cannot update script for non-latest version. Please run with"
+                echo "no options set if you want to update the script too!"
+                exit
+            fi
             ;;
         perf)
             echo -e "Heads up! Perf requires elevated Docker privileges to run. This is"
@@ -180,8 +189,8 @@ function checkArgs() {
 function main() {
     # Prep our host environment
     identifyOS
-    checkForUpdates
     startDocker
+    checkForUpdates
     if [ $# -eq 0 ]; then
         echo -e "$MESSAGE_HELP" && exit
     fi
