@@ -1,9 +1,9 @@
-name: Publish to GHCR
+name: Build dev images
 
 on:
   push:
-    branches: [ main ]
-    tags: [ 'v*' ]
+    branch: [ dev, 'feature/*', 'refactor/*', 'fix/*' ]
+    branches-ignore: [ main ]
 
 jobs:
   build:
@@ -27,12 +27,12 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: ghcr.io/derickson2402/dockerized-caen
+          flavor: |
+            latest=false
           tags: |
             type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
             type=sha,prefix=sha-
+            type=raw,value={{branch}}-{{sha}}
           labels: |
             org.opencontainers.image.title=Dockerized-CAEN
             org.opencontainers.image.description=Containerized CAEN Linux Environment
@@ -45,6 +45,6 @@ jobs:
           context: .
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
