@@ -22,11 +22,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Force update docker layer caching
-        run: |
-          docker pull ghcr.io/derickson2402/dockerized-caen:latest
-          docker pull ghcr.io/derickson2402/dockerized-caen:dev
-
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v3
@@ -48,8 +43,9 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=ghcr.io/derickson2402/dockerized-caen:buildcache
+          cache-to: type=registry,ref=ghcr.io/derickson2402/dockerized-caen:buildcache,mode=max
+          pull: true
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
