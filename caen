@@ -1,5 +1,5 @@
 #!/bin/bash
-CAEN_SCRIPT_VER=v0.6
+CAEN_SCRIPT_VER=v0.6.1
 
 # Shell settings to improve safety
 set -fu -o pipefail
@@ -19,7 +19,7 @@ CAEN_REPO_NAME=${CAEN_REPO_NAME:=ghcr.io/derickson2402/dockerized-caen}
 CAEN_URL='https://github.com/derickson2402/Dockerized-CAEN'
 CAEN_VERSION=${CAEN_VERSION:=latest}
 CAEN_USER=${CAEN_USER:="$(id -u):$(id -g)"}
-CAEN_DEFAULT_ARGS="--rm -i --name caen-tainer -e TERM=${TERM:=linux} --user ${CAEN_USER}"
+CAEN_DEFAULT_ARGS="--rm -i --name caen-${RANDOM:=1} -e TERM=${TERM:=linux} --user ${CAEN_USER}"
 CAEN_WORKING_DIR="-v '$(pwd):/code'"
 HOST_OS=unknown
 CAEN_LATEST_VERSION=${CAEN_SCRIPT_VER}
