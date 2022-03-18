@@ -25,6 +25,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Force update docker layer caching
+        run: |
+          docker pull ghcr.io/derickson2402/dockerized-caen:latest
+          docker pull ghcr.io/derickson2402/dockerized-caen:dev
+
       - name: Build for testing
         uses: docker/build-push-action@v2
         with:
