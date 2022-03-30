@@ -3,9 +3,19 @@ CAEN_SCRIPT_VER=v0.6.1
 
 # Shell settings to improve safety
 set -fu -o pipefail
-CAEN_ARGS=${CAEN_ARGS:=" "}
+
+# Source any global or workspace configuration options. This must happen first
+# so users can't break private vars. If HOME is unset program will crash. But
+# HOME var is part of POSIX compatability, so not our problem
+if [ -f "${HOME}/.caen.conf" ]; then
+    source "${HOME}/.caen.conf"
+fi
+if [ -f "$(pwd)/.caen.conf" ]; then
+    source "$(pwd)/.caen.conf"
+fi
 
 # Define our help message, docker flags, and env vars
+CAEN_ARGS=${CAEN_ARGS:=" "}
 CAEN_REPO_NAME=${CAEN_REPO_NAME:=ghcr.io/derickson2402/dockerized-caen}
 CAEN_URL='https://github.com/derickson2402/Dockerized-CAEN'
 CAEN_VERSION=${CAEN_VERSION:=latest}
@@ -45,7 +55,8 @@ on GitHub for help:
  
 EOF
 )
-# Make sure a tmp file existst for us to store the last update check date in
+
+# Make sure a tmp file exists for us to store the last update check date in
 [[ -f /tmp/caen-last-update-check ]] || touch /tmp/caen-last-update-check
 CAEN_SCRIPT_LAST_UPDATE=$(cat /tmp/caen-last-update-check)
 

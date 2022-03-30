@@ -11,12 +11,12 @@ caen [program] [args]
 This will run your command in an environment identical to CAEN Linux. For example, if you are working on a C++ project for EECS 281, you could use:
 
 ```bash
-caen make clean
-caen make my_program.cpp < input.txt
-caen valgrind my_program.cpp
-caen perf record my_program.cpp
+caen make my_program.cpp
+caen my_program < input.txt
+caen valgrind my_program
+caen perf record my_program
 caen go build my_other_program.go
-caen ./my_other_program
+caen ./my_other_program < input.txt | caen my_program
 ```
 
 ## Installation
@@ -43,7 +43,7 @@ You can run ```caen bash``` to start a new bash shell in the container! This can
 
 Executables generated with this container are compiled for CAEN servers and won't work on your host system. You should run your ```make clean``` script before switching back and forth, and then run ```make``` from the environment you want to use.
 
-There are a few environment variables that you can use to change the behavior of the container. You can either use ```export VARIABLE=value``` to make the settings stick around until you close your shell, or you can use ```VARIABLE=value caen ...``` to just use it once. The currently supported variables are given below:
+There are a few environment variables that you can use to change the behavior of the container. To permanently set an option, add it to a file in your home directory ```~/.caen.conf```. To set an option just for the current workspace, you can set them in the file ```$(pwd)/.caen.conf```. You can also use ```export VARIABLE=value``` to make the settings stick around just until you close your shell, or you can use ```VARIABLE=value caen ...``` to just use it once. The currently supported variables are given below:
 
 Variable Name | Default Value | Description
 --------------|---------------|------------
@@ -51,13 +51,13 @@ CAEN_VERSION  | latest        | Container tag to use, either of the form ```v0.5
 CAEN_ARGS     | --            | Optional arguments to pass to the ```docker run``` command. Be careful with these, they will likely collide with existing options
 CAEN_USER     | your-uid:your-gid | Defaults to your current ```UID:GID```. You can specify just ```UID``` or both, just need to use the number
 
-For example, temporarily run a command as a different user:
+For example, your workspace configuration might look like this because you need to run as a different user:
 
-```bash
-CAEN_USER=65535 caen my-program
+```env
+CAEN_USER=65535
 ```
 
-Or use a different version until you close your shell:
+Or maybe you want to use a different container version until you close your shell:
 
 ```bash
 export CAEN_VERSION=dev
