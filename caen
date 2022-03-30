@@ -5,9 +5,10 @@ CAEN_SCRIPT_VER=v0.6.1
 set -fu -o pipefail
 
 # Source any global or workspace configuration options. This must happen first
-# so users can't break private vars
-if [ -f ~/.caen.conf ]; then
-    source "~/.caen.conf"
+# so users can't break private vars. If HOME is unset program will crash. But
+# HOME var is part of POSIX compatability, so not our problem
+if [ -f "${HOME}/.caen.conf" ]; then
+    source "${HOME}/.caen.conf"
 fi
 if [ -f "$(pwd)/.caen.conf" ]; then
     source "$(pwd)/.caen.conf"
