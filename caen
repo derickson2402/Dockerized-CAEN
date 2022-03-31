@@ -95,11 +95,13 @@ function checkForUpdates() {
             echo -e "Hold up! Could not find latest version of script from GitHub, but you appear"
             echo -e "to be connected to the internet. Check your internet and try again, or go to"
             echo -e "GitHub for more help:"
-            echo -e "\n$CAEN_URL\n"
+            echo -e "\n    ${CAEN_URL}\n"
             exit 1
         elif [[ ${CAEN_VERSION} != "latest" ]]; then
             # Can't check for script updates on special versions, just pull the newest container
-            docker pull ${CAEN_REPO_NAME}:${CAEN_VERSION}
+            echo -e "Heads up! There may be an update available for version ${CAEN_VERSION}."
+            echo -e "Run the following to get the latest version"
+            echo -e "\n    sudo caen update\n"
         elif [[ ${CAEN_SCRIPT_VER} != ${CAEN_LATEST_VERSION} ]]; then
             echo -e "Heads up! There is an update available from ${CAEN_SCRIPT_VER} to ${CAEN_LATEST_VERSION}."
             echo -e "To update, run the following:"
@@ -148,6 +150,31 @@ function startDocker() {
     fi
 }
 
+# Update the docker container environment and then update the wrapper script.
+# This will delete the current script file and replace it
+function updateCAEN() {
+    if [[ $(whoami) != "root" ]]; then
+        echo -e "Hold up! You can only run an update as root!"
+        echo -e "Try running with sudo:"
+        echo -e "\n    sudo caen update\n"
+        exit 1
+    fi
+
+    # Check for internet connection
+    if ( wget -q --spider ${CAEN_URL} ); then
+        echo "Updating container environment..."
+        docker pull ${CAEN_REPO_NAME}:${CAEN_VERSION}
+        echo "Updating wrapper script..."
+        echo '#!/bin/bash' > /tmp/caen-update.sh
+        chmod +x /tmp/caen-update.sh
+        echo "/bin/bash -c 'wget -q https://raw.githubusercontent.com/derickson2402/Dockerized-CAEN/main/caen -O /usr/local/bin/caen && chmod +x /usr/local/bin/caen'" >> /tmp/caen-update.sh
+        /tmp/caen-update.sh && rm -f /tmp/caen-update.sh && echo "Done!" && exit
+    else
+        echo -e "Hold up! Could not reach GitHub.com! Check your internet connection and"
+        echo -e "try again."
+    fi
+}
+
 # Process the CLI args, set default vars, and check what program should be run.
 # This lets us give help/version info, and prompt the user for commands that
 # require elevated permissions
@@ -166,25 +193,7 @@ function checkArgs() {
             exit
             ;;
         update)
-            if [[ $(whoami) != "root" ]]; then
-                echo -e "Hold up! You can only run an update as root!"
-                echo -e "Try running with sudo:"
-                echo -e "\n    sudo caen update\n"
-                exit 1
-            fi
-            echo "Updating container environment..."
-            docker pull ${CAEN_REPO_NAME}:${CAEN_VERSION} > /dev/null
-            if [[ ${CAEN_VERSION} == "latest" ]]; then
-                echo "Updating wrapper script..."
-                echo '#!/bin/bash' > /tmp/caen-update.sh
-                chmod +x /tmp/caen-update.sh
-                echo "/bin/bash -c 'wget -q https://raw.githubusercontent.com/derickson2402/Dockerized-CAEN/main/caen -O /usr/local/bin/caen && chmod +x /usr/local/bin/caen'" >> /tmp/caen-update.sh
-                /tmp/caen-update.sh && rm -f /tmp/caen-update.sh && echo "Done!" && exit
-            else
-                echo "Heads up! Cannot update script for non-latest version. Please run with"
-                echo "no options set if you want to update the script too!"
-                exit
-            fi
+            updateCAEN
             ;;
         perf)
             echo -e "Heads up! Perf requires elevated Docker privileges to run. This is"
@@ -198,13 +207,14 @@ function checkArgs() {
 
 # Execute the given program and its args using the CAEN container
 function main() {
-    # Prep our host environment
-    identifyOS
-    startDocker
+    # Prep our host environment. Make sure to check for updates first in case
+    # there is a script bug, so user is more likely to fix their issue
     checkForUpdates
+    identifyOS
     if [ $# -eq 0 ]; then
         echo -e "$MESSAGE_HELP" && exit
     fi
+    startDocker
     checkArgs $1
 
     # Check for stdin, allowing for file redirection to the container
