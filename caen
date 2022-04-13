@@ -140,8 +140,9 @@ function checkDocker() {
         sleep 10
         declare -i counter=0
         while ( ! docker stats --no-stream &> /dev/null ); do
-            if [[ $((${counter} % 10)) ]]; then
+            if [[ $((${counter} % 15)) == 0 ]]; then
                 echo -e "Waiting for Moby the Whale to wake up..."
+            fi
             (( counter += 1 ))
             sleep 1
             if [[ counter -gt 60 ]]; then
@@ -149,9 +150,9 @@ function checkDocker() {
                 echo -e "Maybe try restarting Docker manually?"
                 exit 1
             fi
-            return
         done
         echo "Hi Moby!"
+        return
     fi
 
     # All checks have passed, Docker is ready to go
