@@ -136,15 +136,18 @@ function checkDocker() {
         elif [[ "$HOST_OS" == "linux" ]]; then
             sudo systemctl start docker
         fi
-        sleep 5
+        # Docker takes up to about 1m to boot, need to wait for it
+        sleep 10
         declare -i counter=0
         while ( ! docker stats --no-stream &> /dev/null ); do
+            if [[ $((${counter} % 10)) ]]; then
+                echo -e "Waiting for Moby the Whale to wake up..."
             (( counter += 1 ))
-            echo -e "Waiting for Moby the Whale to wake up..."
-            sleep 15
-            if [[ counter -gt 2 ]]; then
+            sleep 1
+            if [[ counter -gt 60 ]]; then
                 echo -e "Couldn't wake up Moby :("
-                echo -e "Maybe try restarting Docker?"
+                echo -e "Maybe try restarting Docker manually?"
+                exit 1
             fi
             return
         done
@@ -181,6 +184,7 @@ function updateCAEN() {
     else
         echo -e "Hold up! Could not reach GitHub.com! Check your internet connection and"
         echo -e "try again."
+        exit 1
     fi
 }
 
@@ -239,7 +243,7 @@ function main() {
     checkArgs $1
 
     # Check for stdin, allowing for file redirection to the container
-    if [ ${HOST_DOCKER_READY} != "true" ]; then
+    if [[ ${HOST_DOCKER_READY} != "true" ]]; then
         exit 1
     fi
     if [ ! -t 0 ]; then
