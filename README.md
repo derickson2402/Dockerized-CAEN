@@ -21,7 +21,9 @@ caen ./my_other_program < input.txt | caen my_program
 
 ## Installation
 
-To use this script, you need to have Docker installed on your [macOS](https://docs.docker.com/desktop/mac/install/), [Windows](https://docs.docker.com/desktop/windows/install/), or [Linux](https://docs.docker.com/engine/install/) computer. With Docker installed, simply run the following command in a shell:
+To use this script, you need to have Docker installed on your [macOS](https://docs.docker.com/desktop/mac/install/), [Windows](https://docs.docker.com/desktop/windows/install/), or [Linux](https://docs.docker.com/engine/install/) computer. Windows users, you will need to make sure to upgrade your existing WSL1 installation to WSL2 BEFORE installing Docker (see [#25](https://github.com/derickson2402/Dockerized-CAEN/issues/25)). Linux users, you will need to add yourself to the ```docker``` group (see [here](https://www.configserverfirewall.com/ubuntu-linux/add-user-to-docker-group-ubuntu/)).
+
+With Docker installed, simply run the following command in a shell:
 
 ```bash
 sudo /bin/bash -c 'wget \
