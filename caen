@@ -1,5 +1,5 @@
 #!/bin/bash
-CAEN_SCRIPT_VER=v0.6.2
+CAEN_SCRIPT_VER=v0.6.3
 
 # Shell settings to improve safety
 set -fu -o pipefail
