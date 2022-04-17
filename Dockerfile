@@ -22,7 +22,8 @@ RUN sed -i \
     && dnf swap -y centos-linux-repos centos-stream-repos \
     && dnf install -y --nodocs wget bzip2 tar make
 
-# Set bash as default
+# Set bash as default, give it pretty prompt
+RUN echo "PS1='\[\e[0;1;38;5;82m\]CAEN ~\[\e[0m\] '" > /etc/profile.d/caen.sh
 SHELL ["/bin/bash", "-c"]
 
 
