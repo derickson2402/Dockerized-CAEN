@@ -156,17 +156,22 @@ RUN wget https://dl.google.com/go/go1.16.12.linux-amd64.tar.gz \
 
 ################################################################################
 #
-# Default container with all current tools and supported languages
+# Default container with all tools and supported languages
 
 FROM caen-base
 
-# Install dev packages and tools
+# Install dev packages and tools, clean dnf cache to save space
 RUN dnf --setopt=group_package_types=mandatory \
         groupinstall --nodocs -y "Development Tools" \
-    && dnf install --nodocs -y perf valgrind \
+    && dnf install --nodocs -y \
+        perf \
+        valgrind \
+        git \
+        vim \
+        which \
     && dnf clean all \
     && rm -rf /var/cache/yum \
-    && rm -rf /var/lib/rpm/Packages
+    && rm -rf /var/cache/dnf
 
 # Sym link expected location of CAEN compiler just in case
 RUN mkdir -p /usr/um/gcc-6.2.0/bin/ \
