@@ -187,6 +187,9 @@ RUN ln -s /usr/um/gcc-6.2.0/bin/gcc /usr/local/bin/gcc \
     && ln -s /usr/um/gcc-6.2.0/bin/g++ /usr/local/bin/g++ \
     && ln -s /usr/um/gcc-6.2.0/bin/gfortran /usr/local/bin/gfortran
 
+# Give bash a pretty prompt
+ENV PS1='\[\e[0;1;38;5;82m\]CAEN ~\[\e[0m\] '
+
 # Run the container in the user's project folder
 WORKDIR /code
 CMD ["/bin/bash"]
