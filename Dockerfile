@@ -195,6 +195,9 @@ RUN ln -s /usr/um/gcc-6.2.0/bin/gcc /usr/local/bin/gcc \
 # Give bash a pretty prompt
 ENV PS1="\[\e[0;1;38;5;82m\]CAEN ~\[\e[0m\] "
 
+# Configure bash to force CRLF conversions
+RUN git config --global core.autocrlf true
+
 # Run the container in the user's project folder
 WORKDIR /code
 CMD ["/bin/bash", "-c"]
