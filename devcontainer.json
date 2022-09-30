@@ -1,0 +1,33 @@
+{
+	// Specify the CAEN container to develop in. You can replace "latest" with another tag if you need a different version (you probably don't though)
+	"name": "CAEN",
+	"image": "ghcr.io/derickson2402/dockerized-caen:latest",
+
+	// Add your extensions below. You can find the extension name by searching
+	// the extension store, and copy/pasting the "identifier" on the right side.
+	// Some useful extensions are already included
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-vscode.cpptools-extension-pack",
+				"violetbp.lc2k",
+				"mhutchie.git-graph",
+				"nhoizey.gremlins"
+			]
+		}
+	},
+
+	// Here you can add scripts to run when the container is built. This is good
+	// for installing extra tools you need or making some specific change for
+	// your workflow. Remember you can also request the tools be included by
+	// default by logging an issue at:
+	//     https://github.com/derickson2402/Dockerized-CAEN/issues
+	// In this case, we are installing the tree command (even though it is
+	// there by default, so this is not a useful example...):
+	// "initializeCommand": "dnf update -y && dnf install -y tree",
+
+	// Give us a pretty bash prompt (since VSCode is overriding shell)
+	"remoteEnv": {
+		"PS1": "\\[\\e[0;1;38;5;82m\\]CAEN ~\\[\\e[0m\\] " // Note the '\\'
+	}
+}
