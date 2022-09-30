@@ -2,18 +2,18 @@
 
 [![Publish Latest](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/publish.yml/badge.svg)](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/publish.yml) [![Build test image](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/testing.yml/badge.svg)](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/publish-dev.yml)
 
-# Installation
-
 Tired of using ssh and Duo mobile when testing your code with CAEN?
 Love using VS Code on your own laptop?
 Use this project and you'll never have an issue again!
+
+# Installation
 
 Before using, you will need Docker Desktop installed (
 [macOS](https://docs.docker.com/desktop/mac/install/),
 [Windows](https://docs.docker.com/desktop/windows/install/),
 [Linux](https://docs.docker.com/engine/install/)
 ).
-Now copy the ```devcontainer.json``` into your repository as ```.devcontainer/devcontainer.json```.
+Now copy the file ```devcontainer.json``` into your repository as ```.devcontainer/devcontainer.json```.
 You can do this automatically by running the following:
 
 ```bash
@@ -21,9 +21,10 @@ You can do this automatically by running the following:
 ```
 
 Great!
-Now whenever you open your project in VS Code, it will prompt you to open the project in the container.
-If you choose this option, it will reopen the window and say ```Dev Container: CAEN``` in the bottom left corner.
+Now when you open your project in VS Code, it will ask if you want to open the project in the container.
+This will reopen the window and say ```Dev Container: CAEN``` in the bottom left corner.
 Everything you do is now running in a CAEN environment!
+If you don't see the prompt, you can also open the command palette and run ```Remote-Containers: Reopen in Container```.
 Happy coding!
 
 ## How Does This Work?
@@ -36,16 +37,16 @@ It also means that the Autograder compiler works the same as in the container!
 
 ## Need A Program That's Not Installed?
 
-Awesome, there's a simple solution to that.
+There's a simple solution to that!
 The ```devcontainer.json``` file contains instructions for installing more tools.
 You can also log an issue [here](https://github.com/derickson2402/Dockerized-CAEN/issues/new) with the name of said program and any special tools that might go along with it.
-I will add it as soon as I can!
+I will add it as a default as soon as I can!
 
 # ```caen``` script for macOS users
 
-Programming on macOS and missing out on Linux tools?
-You can use the ```caen``` script to use the devcontainer from a terminal.
-This means you can run commands like this and it will execute in CAEN:
+Programming on macOS and just want to use CAEN tools on the command line?
+You can use the ```caen``` script to use the devcontainer from a terminal (however you cannot use custom tools this way).
+You can run commands like this and it will execute in CAEN:
 
 ```bash
 caen [program] [args]

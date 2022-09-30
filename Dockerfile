@@ -143,7 +143,7 @@ RUN wget https://github.com/danmar/cppcheck/archive/2.4.tar.gz \
 
 ################################################################################
 #
-# Builder container for compiling cppcheck
+# Builder container for compiling golang
 
 FROM caen-dev AS builder-golang
 
@@ -188,8 +188,9 @@ RUN dnf --setopt=group_package_types=mandatory \
 # Give bash a pretty prompt
 ENV PS1="\[\e[0;1;38;5;82m\]CAEN ~\[\e[0m\] "
 
-# Configure bash to force CRLF conversions
-RUN git config --global core.autocrlf true
+# Configure bash to force CRLF conversions, fix Perf bug (#28)
+RUN git config --global core.autocrlf true \
+    && echo "CAEN in Docker" > /usr/share/doc/perf-tip/tips.txt
 
 # Run the container in the user's project folder
 WORKDIR /code
