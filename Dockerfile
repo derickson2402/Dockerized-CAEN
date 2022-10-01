@@ -190,6 +190,7 @@ ENV PS1="\[\e[0;1;38;5;82m\]CAEN ~\[\e[0m\] "
 
 # Configure bash to force CRLF conversions, fix Perf bug (#28)
 RUN git config --global core.autocrlf true \
+    && mkdir -p /usr/share/doc/perf-tip/ \
     && echo "CAEN in Docker" > /usr/share/doc/perf-tip/tips.txt
 
 # Run the container in the user's project folder

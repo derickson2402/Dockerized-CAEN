@@ -14,7 +14,7 @@ Before using, you will need Docker Desktop installed (
 [Linux](https://docs.docker.com/engine/install/)
 ).
 Now copy the file ```devcontainer.json``` into your repository as ```.devcontainer/devcontainer.json```.
-You can do this automatically by running the following:
+You can do this automatically by moving into your repository and running the following:
 
 ```bash
 /bin/bash -c 'mkdir .devcontainer && wget https://raw.githubusercontent.com/derickson2402/Dockerized-CAEN/main/devcontainer.json -O .devcontainer/devcontainer.json'
