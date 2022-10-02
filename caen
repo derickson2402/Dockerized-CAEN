@@ -48,9 +48,7 @@ For more help, check me out on GitHub:
 EOF
 )
 MESSAGE_OS_ERROR=$(cat << EOF
-Hold up! We couldn't figure out what computer you're running! You
-can probably still run the container manually though, check me out
-on GitHub for help:
+Hold up! This script is only supported for macOS. See GitHub for more help:
 
     ${CAEN_URL}
  
@@ -61,17 +59,9 @@ EOF
 [[ -f /tmp/caen-last-update-check ]] || touch /tmp/caen-last-update-check
 CAEN_SCRIPT_LAST_UPDATE=$(cat /tmp/caen-last-update-check)
 
-# Get OS information and store it to HOST_OS as 'linux', 'windows', or 'mac'
-# This is different from OSTYPE since for example WSL and Ubuntu are both
-# of the form 'linux-gnu*'
+# Get OS information and verify we are on macOS
 function identifyOS() {
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        if [[ "${WSL_DISTRO_NAME:=unknown}" == "unknown" ]]; then
-            HOST_OS=linux
-        else
-            HOST_OS=windows
-        fi
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
+    if [[ "$OSTYPE" == "darwin"* ]]; then
         HOST_OS=mac
     else
         echo -e "$MESSAGE_OS_ERROR" && exit 1
@@ -118,24 +108,12 @@ function checkDocker() {
     if ( ! command -v docker &> /dev/null ); then
         echo -e "Hold up! Docker is not installed on your computer!"
         echo -e "You can download and install it here:"
-        if [[ "$HOST_OS" == "windows" ]]; then
-            echo -e "\n    https://docs.docker.com/desktop/#download-and-install\n"
-        elif [[ ${HOST_OS} == "mac" ]]; then
-            echo -e "\n    https://docs.docker.com/desktop/mac/install/\n"
-        else
-            echo -e "\n    https://docs.docker.com/engine/install/\n"
-        fi
+        echo -e "\n    https://docs.docker.com/desktop/mac/install/\n"
         return
     fi
     if ( ! docker ps &> /dev/null ); then
         echo -e "Waking up Moby the Whale..."
-        if [[ "$HOST_OS" == "mac" ]]; then
-            open /Applications/Docker.app
-        elif [[ "$HOST_OS" == "windows" ]]; then
-            bash -c '/mnt/c/Program\ Files/Docker/Docker/Docker\ Desktop.exe &'
-        elif [[ "$HOST_OS" == "linux" ]]; then
-            sudo systemctl start docker
-        fi
+        open /Applications/Docker.app
         # Docker takes up to about 1m to boot, need to wait for it
         sleep 10
         declare -i counter=0
@@ -152,7 +130,6 @@ function checkDocker() {
             fi
         done
         echo "Hi Moby!"
-        return
     fi
 
     # All checks have passed, Docker is ready to go
