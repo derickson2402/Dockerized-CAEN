@@ -42,15 +42,3 @@ jobs:
           docker run --rm ${{ env.TEST_TAG }} valgrind --version
           docker run --rm ${{ env.TEST_TAG }} cppcheck --version
           docker run --rm ${{ env.TEST_TAG }} go version
-
-      - name: Test wrapper script
-        run: |
-          echo "$(date +%y-%m-%d)" > /tmp/caen-last-update-check
-          ./caen version
-          ./caen help
-          ./caen gcc --version
-          ./caen g++ --version
-          ./caen valgrind --version
-          ./caen cppcheck --version
-          ./caen go version
-

@@ -143,7 +143,7 @@ RUN wget https://github.com/danmar/cppcheck/archive/2.4.tar.gz \
 
 ################################################################################
 #
-# Builder container for compiling cppcheck
+# Builder container for compiling golang
 
 FROM caen-dev AS builder-golang
 
@@ -156,22 +156,9 @@ RUN wget https://dl.google.com/go/go1.16.12.linux-amd64.tar.gz \
 
 ################################################################################
 #
-# Default container with all current tools and supported languages
+# Default container with all tools and supported languages
 
 FROM caen-base
-
-# Install dev packages and tools
-RUN dnf --setopt=group_package_types=mandatory \
-        groupinstall --nodocs -y "Development Tools" \
-    && dnf install --nodocs -y perf valgrind \
-    && dnf clean all \
-    && rm -rf /var/cache/yum \
-    && rm -rf /var/lib/rpm/Packages
-
-# Sym link expected location of CAEN compiler just in case
-RUN mkdir -p /usr/um/gcc-6.2.0/bin/ \
-    && ln -s /usr/bin/gcc /usr/um/gcc-6.2.0/bin/gcc \
-    && ln -s /usr/bin/g++ /usr/um/gcc-6.2.0/bin/g++
 
 # Set up cppcheck
 COPY --from=builder-cppcheck /usr/bin/cppcheck /usr/bin/cppcheck
@@ -181,12 +168,31 @@ COPY --from=builder-cppcheck /usr/share/Cppcheck /usr/share/Cppcheck
 COPY --from=builder-golang /usr/um/go /usr/um/go
 RUN ln -s /usr/um/go/bin/go /usr/bin/go
 
-# Copy and link our compiled gcc to the system default
+# Set our compiled gcc to custom software location
 COPY --from=gcc-builder /usr/um/gcc-6.2.0/ /usr/um/gcc-6.2.0/
-RUN ln -s /usr/um/gcc-6.2.0/bin/gcc /usr/local/bin/gcc \
-    && ln -s /usr/um/gcc-6.2.0/bin/g++ /usr/local/bin/g++ \
-    && ln -s /usr/um/gcc-6.2.0/bin/gfortran /usr/local/bin/gfortran
+
+# Install dev packages and tools, clean dnf cache to save space
+RUN dnf --setopt=group_package_types=mandatory \
+        groupinstall --nodocs -y "Development Tools" \
+    && dnf install --nodocs -y \
+        perf \
+        valgrind \
+        git \
+        vim \
+        which \
+        gnupg2 \
+    && dnf clean all \
+    && rm -rf /var/cache/yum \
+    && rm -rf /var/cache/dnf
+
+# Give bash a pretty prompt
+ENV PS1="\[\e[0;1;38;5;82m\]CAEN ~\[\e[0m\] "
+
+# Configure bash to force CRLF conversions, fix Perf bug (#28)
+RUN git config --global core.autocrlf true \
+    && mkdir -p /usr/share/doc/perf-tip/ \
+    && echo "CAEN in Docker" > /usr/share/doc/perf-tip/tips.txt
 
 # Run the container in the user's project folder
 WORKDIR /code
-CMD ["/bin/bash"]
+CMD ["/bin/bash", "-c"]
