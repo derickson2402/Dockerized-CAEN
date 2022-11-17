@@ -2,9 +2,9 @@
 
 [![Publish Latest](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/publish.yml/badge.svg)](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/publish.yml) [![Build test image](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/testing.yml/badge.svg)](https://github.com/derickson2402/Dockerized-CAEN/actions/workflows/publish-dev.yml)
 
-Tired of using ssh and Duo mobile when testing your code with CAEN?
-Love using VS Code on your own laptop?
-Use this project and you'll never have an issue again!
+Want to develop your code on CAEN Linux but don't want to deal with Duo and SSH?
+Big VS Code fan?
+This container lets VS Code automatically run your program, debugger, terminal, and all your tools in a CAEN environment.
 
 # Installation
 
