@@ -24,7 +24,7 @@
 	//     https://github.com/derickson2402/Dockerized-CAEN/issues
 	// In this case, we are installing the tree command (even though it is
 	// there by default, so this is not a useful example...):
-	// "initializeCommand": "dnf update -y && dnf install -y tree",
+	// "postCreateCommand": "dnf update -y && dnf install -y tree",
 
 	// Give us a pretty bash prompt (since VSCode is overriding shell)
 	"remoteEnv": {
