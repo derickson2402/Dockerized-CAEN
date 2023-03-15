@@ -172,7 +172,7 @@ RUN ln -s /usr/um/go/bin/go /usr/bin/go
 COPY --from=gcc-builder /usr/um/gcc-6.2.0/ /usr/um/gcc-6.2.0/
 
 # Add MongoDB repo
-RUN echo $'[mongodb-org-6.0]' \n\
+RUN echo $'[mongodb-org-6.0] \n\
 name=MongoDB Repository \n\
 baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/6.0/x86_64/ \n\
 gpgcheck=1 \n\
