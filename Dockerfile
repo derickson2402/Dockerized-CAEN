@@ -171,9 +171,19 @@ RUN ln -s /usr/um/go/bin/go /usr/bin/go
 # Set our compiled gcc to custom software location
 COPY --from=gcc-builder /usr/um/gcc-6.2.0/ /usr/um/gcc-6.2.0/
 
+# Add MongoDB repo
+RUN echo $'[mongodb-org-6.0]' \n\
+name=MongoDB Repository \n\
+baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/6.0/x86_64/ \n\
+gpgcheck=1 \n\
+enabled=1 \n\
+gpgkey=https://www.mongodb.org/static/pgp/server-6.0.asc' \
+    > /etc/yum.repos.d/mongodb-org-6.0.repo
+
 # Install dev packages and tools, clean dnf cache to save space
 RUN dnf --setopt=group_package_types=mandatory \
         groupinstall --nodocs -y "Development Tools" \
+    && rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
     && dnf install --nodocs -y \
         perf \
         valgrind \
@@ -181,6 +191,9 @@ RUN dnf --setopt=group_package_types=mandatory \
         vim \
         which \
         gnupg2 \
+        rlwrap \
+        java-1.8.0-openjdk-devel \
+        mongodb-org \
     && dnf clean all \
     && rm -rf /var/cache/yum \
     && rm -rf /var/cache/dnf
