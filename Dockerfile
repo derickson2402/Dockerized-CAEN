@@ -30,7 +30,7 @@ SHELL ["/bin/bash", "-c"]
 #
 # Builder stage for compiling gcc-6.2.0 compiler
 
-FROM caen-base as gcc-builder
+FROM caen-base as gcc-6-builder
 
 # Install pre-requisite programs for compiling gcc-6.2.0
 RUN dnf update -y && dnf install -y --nodocs \
@@ -169,9 +169,10 @@ COPY --from=builder-golang /usr/um/go /usr/um/go
 RUN ln -s /usr/um/go/bin/go /usr/bin/go
 
 # Set our compiled gcc to custom software location
-COPY --from=gcc-builder /usr/um/gcc-6.2.0/ /usr/um/gcc-6.2.0/
+COPY --from=gcc-6-builder /usr/um/gcc-6.2.0/ /usr/um/gcc-6.2.0/
 
-# Install dev packages and tools, clean dnf cache to save space
+# Install dev packages and tools, clean dnf cache to save space. Also install
+# gcc-12.2.1
 RUN dnf --setopt=group_package_types=mandatory \
         groupinstall --nodocs -y "Development Tools" \
     && dnf install --nodocs -y \
@@ -181,9 +182,35 @@ RUN dnf --setopt=group_package_types=mandatory \
         vim \
         which \
         gnupg2 \
+        gcc-toolset-12 \
     && dnf clean all \
     && rm -rf /var/cache/yum \
     && rm -rf /var/cache/dnf
+
+# Configure versions of gcc. Default is 12.2.1, but gcc-12, gcc-12.2,
+# gcc-12.2.1, gcc-8, gcc-8.5, gcc-8.5.0, gcc-6, gcc-6.2, gcc-6.2.0 should all
+# work as expected
+WORKDIR /usr/local/bin
+RUN    ln -s /usr/bin/gcc                        gcc        \
+    && ln -s /usr/bin/g++                        g++        \
+    && ln -s /opt/rh/gcc-toolset-12/root/bin/gcc gcc-12     \
+    && ln -s /opt/rh/gcc-toolset-12/root/bin/gcc g++-12     \
+    && ln -s /opt/rh/gcc-toolset-12/root/bin/gcc gcc-12.2   \
+    && ln -s /opt/rh/gcc-toolset-12/root/bin/gcc g++-12.2   \
+    && ln -s /opt/rh/gcc-toolset-12/root/bin/gcc gcc-12.2.1 \
+    && ln -s /opt/rh/gcc-toolset-12/root/bin/gcc g++-12.2.1 \
+    && ln -s /usr/bin/gcc                        gcc-8      \
+    && ln -s /usr/bin/g++                        g++-8      \
+    && ln -s /usr/bin/gcc                        gcc-8.5    \
+    && ln -s /usr/bin/g++                        g++-8.5    \
+    && ln -s /usr/bin/gcc                        gcc-8.5.0  \
+    && ln -s /usr/bin/g++                        g++-8.5.0  \
+    && ln -s /usr/um/gcc-6.2.0/bin/gcc           gcc-6      \
+    && ln -s /usr/um/gcc-6.2.0/bin/g++           g++-6      \
+    && ln -s /usr/um/gcc-6.2.0/bin/gcc           gcc-6.2    \
+    && ln -s /usr/um/gcc-6.2.0/bin/g++           g++-6.2    \
+    && ln -s /usr/um/gcc-6.2.0/bin/gcc           gcc-6.2.0  \
+    && ln -s /usr/um/gcc-6.2.0/bin/g++           g++-6.2.0
 
 # Give bash a pretty prompt
 ENV PS1="\[\e[0;1;38;5;82m\]CAEN ~\[\e[0m\] "
