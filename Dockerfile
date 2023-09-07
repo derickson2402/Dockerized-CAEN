@@ -191,8 +191,8 @@ RUN dnf --setopt=group_package_types=mandatory \
 # gcc-12.2.1, gcc-8, gcc-8.5, gcc-8.5.0, gcc-6, gcc-6.2, gcc-6.2.0 should all
 # work as expected
 WORKDIR /usr/local/bin
-RUN ln -s /opt/rh/gcc-toolset-12/root/bin/gcc gcc           \
-    && ln -s /opt/rh/gcc-toolset-12/root/bin/gcc g++        \
+RUN    ln -s /opt/rh/gcc-toolset-12/root/bin/gcc gcc        \
+    && ln -s /opt/rh/gcc-toolset-12/root/bin/g++ g++        \
     && ln -s /opt/rh/gcc-toolset-12/root/bin/gcc gcc-12     \
     && ln -s /opt/rh/gcc-toolset-12/root/bin/gcc g++-12     \
     && ln -s /opt/rh/gcc-toolset-12/root/bin/gcc gcc-12.2   \
