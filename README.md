@@ -27,7 +27,13 @@ Everything you do is now running in a CAEN environment!
 If you don't see the prompt, you can also open the command palette and run ```Remote-Containers: Reopen in Container```.
 Happy coding!
 
-## How Does This Work?
+## Compiler Versions
+
+There are currently 3 compiler versions available. ```gcc-6.2.0``` is a legacy version that EECS 281 used a few years ago, ```gcc-8.5.0``` is the default on CAEN (and RHEL 8), and ```gcc-12.2.1``` is a newer version for EECS 482.
+
+The default when you run ```gcc``` is ```gcc-8.5.0```, but if you wanted to use for example ```gcc-12.2.1``` then ```gcc-12```, ```gcc-12.2```, and ```gcc-12.2.1``` all work the same.
+
+## How Does This Project Work?
 
 Great question!
 It uses a [Docker Container](https://www.docker.com/resources/what-container/), which is like a virtual environment running Linux.
