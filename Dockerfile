@@ -187,30 +187,9 @@ RUN dnf --setopt=group_package_types=mandatory \
     && rm -rf /var/cache/yum \
     && rm -rf /var/cache/dnf
 
-# Configure versions of gcc. Default is 12.2.1, but gcc-12, gcc-12.2,
-# gcc-12.2.1, gcc-8, gcc-8.5, gcc-8.5.0, gcc-6, gcc-6.2, gcc-6.2.0 should all
-# work as expected
+# Configure gcc-12.2.1 as default
 WORKDIR /usr/local/bin
-RUN    ln -s /usr/bin/gcc                        gcc        \
-    && ln -s /usr/bin/g++                        g++        \
-    && ln -s /opt/rh/gcc-toolset-12/root/bin/gcc gcc-12     \
-    && ln -s /opt/rh/gcc-toolset-12/root/bin/gcc g++-12     \
-    && ln -s /opt/rh/gcc-toolset-12/root/bin/gcc gcc-12.2   \
-    && ln -s /opt/rh/gcc-toolset-12/root/bin/gcc g++-12.2   \
-    && ln -s /opt/rh/gcc-toolset-12/root/bin/gcc gcc-12.2.1 \
-    && ln -s /opt/rh/gcc-toolset-12/root/bin/gcc g++-12.2.1 \
-    && ln -s /usr/bin/gcc                        gcc-8      \
-    && ln -s /usr/bin/g++                        g++-8      \
-    && ln -s /usr/bin/gcc                        gcc-8.5    \
-    && ln -s /usr/bin/g++                        g++-8.5    \
-    && ln -s /usr/bin/gcc                        gcc-8.5.0  \
-    && ln -s /usr/bin/g++                        g++-8.5.0  \
-    && ln -s /usr/um/gcc-6.2.0/bin/gcc           gcc-6      \
-    && ln -s /usr/um/gcc-6.2.0/bin/g++           g++-6      \
-    && ln -s /usr/um/gcc-6.2.0/bin/gcc           gcc-6.2    \
-    && ln -s /usr/um/gcc-6.2.0/bin/g++           g++-6.2    \
-    && ln -s /usr/um/gcc-6.2.0/bin/gcc           gcc-6.2.0  \
-    && ln -s /usr/um/gcc-6.2.0/bin/g++           g++-6.2.0
+RUN echo "source /opt/rh/gcc-toolset-12/enable" >> /root/.bashrc
 
 # Give bash a pretty prompt
 ENV PS1="\[\e[0;1;38;5;82m\]CAEN ~\[\e[0m\] "
