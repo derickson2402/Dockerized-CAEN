@@ -31,7 +31,9 @@ Happy coding!
 
 There are currently 3 compiler versions available. ```gcc-6.2.0``` is a legacy version that EECS 281 used a few years ago, ```gcc-8.5.0``` is the default on CAEN (and RHEL 8), and ```gcc-12.2.1``` is a newer version for EECS 482.
 
-The default when you run ```gcc``` is ```gcc-8.5.0```, but if you wanted to use for example ```gcc-12.2.1``` then ```gcc-12```, ```gcc-12.2```, and ```gcc-12.2.1``` all work the same.
+If you want to use ```gcc-6.2.0```, you can use ```gcc-6```, ```gcc-6.2```, or ```gcc-6.2.0``` (or ```g++-6``` etc.) and they all work equivilently.
+
+For ```gcc-12.2.1```, there is a bug (#46) so instead you should use the container ```dockerized-caen:gcc12```. Modify the ```.devcontainer/devcontainer.json``` file and replace the ```latest``` in the ```"image"``` parameter with ```gcc12``` and click ```Rebuild``` when VSCode prompts you.
 
 ## How Does This Project Work?
 
